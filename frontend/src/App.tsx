@@ -1,18 +1,58 @@
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+// Import your components
+import Login from "./pages/Login/Login";
+import Navbar from "./components/Navbar/Navbar";
+import Signup from "./pages/Signup/Signup";
+
+interface AppContentProps {
+  userName: string | null;
+}
+
 function App() {
+  const userName = localStorage.getItem("userName");
+
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-2xl">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          🎉 Tailwind CSS is working!
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Vite + React + TypeScript + Tailwind CSS
-        </p>
-        <button className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all transform hover:scale-105">
-          Awesome!
-        </button>
-      </div>
-    </div>
+    console.log(
+      "VITE_GOOGLE_CLIENT_ID:",
+      import.meta.env.VITE_GOOGLE_CLIENT_ID
+    ),
+    (
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        <BrowserRouter>
+          <AppContent userName={userName} />
+        </BrowserRouter>
+      </GoogleOAuthProvider>
+    )
+  );
+}
+
+function AppContent({ userName }: AppContentProps) {
+  const location = useLocation();
+
+  return (
+    <>
+      {userName && location.pathname !== "/login" && (
+        <Navbar userName={userName} />
+      )}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            userName ? <Navigate to="/feed" /> : <Navigate to="/login" />
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </>
   );
 }
 
