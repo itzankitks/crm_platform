@@ -3,11 +3,13 @@ import React, { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { GOOGLE_LOGIN_ENDPOINT, LOGIN_ENDPOINT } from "../../utils/endPoints";
+import { useAuth } from "../../context/authContext";
+import Toast from "../../components/Toast/Toast";
+import { useToast } from "../../context/toastContext";
 
 interface User {
   name: string;
   email: string;
-  // Add other user properties as needed
 }
 
 interface LoginResponse {
@@ -16,21 +18,21 @@ interface LoginResponse {
 }
 
 const Login: React.FC = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { showToast } = useToast();
 
   const handleFormLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await axios.post(LOGIN_ENDPOINT, { email, password });
       const { token, user } = res.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("userName", user.name);
+      login(token, user);
       navigate("/feed");
     } catch (err) {
-      alert("Invalid email or password");
+      showToast("Invalid email or password", "error");
     }
   };
 
@@ -38,7 +40,7 @@ const Login: React.FC = () => {
     const idToken = credentialResponse.credential;
 
     if (!idToken) {
-      alert("Google login failed. No credential received.");
+      showToast("Google login failed. No credential received.", "error");
       return;
     }
 
@@ -48,16 +50,13 @@ const Login: React.FC = () => {
       });
       const { token, user } = response.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("userName", user.name);
+      login(token, user);
 
-      alert(`Welcome, ${user.name}`);
-
+      showToast("Google login successful!", "success");
       navigate("/feed");
     } catch (error) {
       console.error("Login failed", error);
-      alert("Google login failed. Please try again.");
+      showToast("Google login failed. Please try again.", "error");
     }
   };
 
@@ -95,7 +94,7 @@ const Login: React.FC = () => {
       <div className="mt-4">
         <GoogleLogin
           onSuccess={handleGoogleLogin}
-          onError={() => alert("Failed")}
+          onError={() => showToast("Google login failed", "error")}
         />
       </div>
 

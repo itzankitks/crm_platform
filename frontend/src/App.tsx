@@ -7,50 +7,106 @@ import {
 } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-// Import your components
 import Login from "./pages/Login/Login";
 import Navbar from "./components/Navbar/Navbar";
 import Signup from "./pages/Signup/Signup";
+import Feed from "./pages/Feed/Feed";
+import { AuthProvider, useAuth } from "./context/authContext";
+import { ToastProvider } from "./context/toastContext";
 
-interface AppContentProps {
-  userName: string | null;
+interface ProtectedRouteProps {
+  children: React.ReactNode;
 }
 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
+
+const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) {
+    return <Navigate to="/feed" replace />;
+  }
+  return <>{children}</>;
+};
+
 function App() {
-  const userName = localStorage.getItem("userName");
+  // const userName = localStorage.getItem("userName");
 
   return (
-    console.log(
-      "VITE_GOOGLE_CLIENT_ID:",
-      import.meta.env.VITE_GOOGLE_CLIENT_ID
-    ),
-    (
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-        <BrowserRouter>
-          <AppContent userName={userName} />
-        </BrowserRouter>
-      </GoogleOAuthProvider>
-    )
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </ToastProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 
-function AppContent({ userName }: AppContentProps) {
+function AppContent() {
   const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
+  const showNavbar =
+    isAuthenticated && !["/login", "/signup"].includes(location.pathname);
 
   return (
     <>
-      {userName && location.pathname !== "/login" && (
-        <Navbar userName={userName} />
-      )}
+      {showNavbar && <Navbar userName={user?.name || ""} />}
       <Routes>
         <Route
           path="/"
           element={
-            userName ? <Navigate to="/feed" /> : <Navigate to="/login" />
+            isAuthenticated ? (
+              <Navigate to="/feed" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/feed"
+          element={
+            <ProtectedRoute>
+              <Feed />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/feed" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
       </Routes>
     </>
   );

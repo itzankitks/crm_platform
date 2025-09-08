@@ -3,24 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { SIGNUP_ENDPOINT, GOOGLE_SIGNUP_ENDPOINT } from "../../utils/endPoints";
+import { useAuth } from "../../context/authContext";
 
 const Signup: React.FC = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // 🔹 Handle normal signup
   const handleFormSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await axios.post(SIGNUP_ENDPOINT, { name, email, password });
       const { token, user } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("userName", user.name);
-
+      login(token, user);
       navigate("/feed");
     } catch (err: any) {
       console.error("Signup error:", err);
@@ -28,7 +26,6 @@ const Signup: React.FC = () => {
     }
   };
 
-  // 🔹 Handle Google Signup
   const handleGoogleSignup = async (credentialResponse: any) => {
     const idToken = credentialResponse.credential;
     if (!idToken) return alert("Google signup failed");
@@ -37,9 +34,7 @@ const Signup: React.FC = () => {
       const res = await axios.post(GOOGLE_SIGNUP_ENDPOINT, { idToken });
       const { token, user } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("userName", user.name);
+      login(token, user);
 
       navigate("/feed");
     } catch (err: any) {
