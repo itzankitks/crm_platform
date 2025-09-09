@@ -13,6 +13,8 @@ import Signup from "./pages/Signup/Signup";
 import Feed from "./pages/Feed/Feed";
 import { AuthProvider, useAuth } from "./context/authContext";
 import { ToastProvider } from "./context/toastContext";
+import Campaigns from "./pages/Campaigns/Campaigns";
+import Segments from "./pages/Segments/Segments";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -93,6 +95,24 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Feed />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/campaign"
+          element={
+            <ProtectedRoute>
+              <Campaigns />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/segment"
+          element={
+            <ProtectedRoute>
+              <Segments />
             </ProtectedRoute>
           }
         />

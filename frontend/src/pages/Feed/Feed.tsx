@@ -23,8 +23,8 @@ interface Segment {
 }
 
 interface ApiResponse<T> {
-  Campaigns?: T[];
-  Segments?: T[];
+  campaigns?: T[];
+  segments?: T[];
 }
 
 const Feed: React.FC = () => {
@@ -40,14 +40,16 @@ const Feed: React.FC = () => {
         const getCampaignData = await axios.get<ApiResponse<Campaign>>(
           GET_CAMPAIGN_ENDPOINT
         );
-        setCampaignData(getCampaignData.data.Campaigns || []);
-        console.log("Fetched Campaign Data: ", getCampaignData.data.Campaigns);
+        setCampaignData(getCampaignData.data.campaigns || []);
+        console.log("Fetched Campaign Data: ", getCampaignData.data.campaigns);
 
         const getSegmentData = await axios.get<ApiResponse<Segment>>(
           GET_SEGMENTS_ENDPOINT
         );
-        setSegments(getSegmentData.data.Segments || []);
-        console.log("Fetch all Segments: ", getSegmentData.data.Segments);
+
+        console.log("Fetched Segment Data: ", getSegmentData.data.segments);
+        setSegments(getSegmentData.data.segments || []);
+        console.log("Fetch all Segments: ", getSegmentData.data.segments);
       } catch (error) {
         console.log("Error in fetching Data, ", error);
       } finally {

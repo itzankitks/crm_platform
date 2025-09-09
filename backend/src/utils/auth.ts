@@ -13,7 +13,9 @@ interface DecodedToken {
 
 const findUserInDb = async (id: string): Promise<IUser | null> => {
   try {
+    console.log("Finding user with ID:", id);
     const user = await User.findById(id);
+    console.log("User found in DB:", user);
     return user ? user.toObject() : null;
   } catch (error) {
     console.error("Error finding user in DB:", error);
@@ -46,15 +48,13 @@ export const authenticateJwt = async (
     const authHeader = req.headers["authorization"];
     const token = authHeader?.split(" ")[1];
 
-    console.log("Token: ", token);
     if (!token) {
       throw new Error("Token does not exist");
     }
 
     const decodedData = await decodeToken(token);
-    console.log("Decoded Data: ", decodedData);
 
-    const userId = decodedData._id;
+    const userId = decodedData.id;
     const user = await findUserInDb(userId);
 
     if (!user) {

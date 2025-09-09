@@ -121,7 +121,9 @@ function parseCondition(part: string): Condition | null {
 
 const getAllSegments = async (req: Request, res: Response) => {
   try {
+    console.log("Fetching all segments");
     const segments = await Segment.find({});
+    console.log("Segments fetched: ", segments);
     res.status(200).json({ segments });
   } catch (error) {
     console.log("Error getting all Segments: ", error);
