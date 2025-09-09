@@ -1,13 +1,18 @@
-import { Redis } from "ioredis";
+import IORedis from "ioredis";
+import dotenv from "dotenv";
 
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+dotenv.config();
 
-redis.on("connect", () => {
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL must be set in environment variables");
+}
+
+export const redisConnection = new IORedis(process.env.REDIS_URL);
+
+redisConnection.on("connect", () => {
   console.log("Connected to Redis");
 });
 
-redis.on("error", (err) => {
-  console.error("Redis connection error:", err);
+redisConnection.on("error", (err) => {
+  console.error("Redis error:", err);
 });
-
-export default redis;

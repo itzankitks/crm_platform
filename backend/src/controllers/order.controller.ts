@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Order, IOrder } from "../models/order.model";
 import { Customer, ICustomer } from "../models/customer.model";
 import mongoose from "mongoose";
-import redis from "../config/redis";
+import { redisConnection } from "../config/redis";
 
 interface OrderData {
   customerId: mongoose.Types.ObjectId | string;
@@ -41,7 +41,7 @@ const createOrder = async (req: Request, res: Response) => {
     customer.countVisits += 1;
     await customer.save();
 
-    await redis.publish(
+    await redisConnection.publish(
       "orders",
       JSON.stringify({
         orderId: newOrder._id,

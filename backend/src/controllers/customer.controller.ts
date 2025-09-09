@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Customer, ICustomer } from "../models/customer.model";
 import mongoose from "mongoose";
-import redis from "../config/redis";
+import { redisConnection } from "../config/redis";
 
 interface CustomerData {
   name: string;
@@ -33,11 +33,14 @@ const createCustomer = async (req: Request, res: Response) => {
       countVisits: customerData.countVisits,
     });
 
-    await redis.publish(
+    await redisConnection.publish(
       "customers",
       JSON.stringify({
-        customerId: newCustomer._id,
-        name: newCustomer.name,
+        type: "CUSTOMER_CREATED",
+        payload: {
+          customerId: newCustomer._id,
+          name: newCustomer.name,
+        },
       })
     );
 
@@ -57,7 +60,7 @@ const createCustomer = async (req: Request, res: Response) => {
 const getAllCustomers = async (req: Request, res: Response) => {
   try {
     const customers: ICustomer[] = await Customer.find({});
-    return res.status(200).json(customers);
+    return res.status(200).json({ customers });
   } catch (error) {
     console.log("Error in get all customers: ", error);
     if (error instanceof Error) {
@@ -108,6 +111,18 @@ const updateCustomerById = async (req: Request, res: Response) => {
     if (!updatedCustomer) {
       return res.status(404).json({ error: "Customer not found" });
     }
+
+    await redisConnection.publish(
+      "customers",
+      JSON.stringify({
+        type: "CUSTOMER_UPDATED",
+        payload: {
+          customerId: updatedCustomer._id,
+          name: updatedCustomer.name,
+        },
+      })
+    );
+
     return res.status(200).json(updatedCustomer);
   } catch (error) {
     console.log("Error in update customer: ", error);
@@ -130,6 +145,18 @@ const deleteCustomerById = async (req: Request, res: Response) => {
     if (!deletedCustomer) {
       return res.status(404).json({ error: "Customer not found" });
     }
+
+    await redisConnection.publish(
+      "customers",
+      JSON.stringify({
+        type: "CUSTOMER_DELETED",
+        payload: {
+          customerId: deletedCustomer._id,
+          name: deletedCustomer.name,
+        },
+      })
+    );
+
     return res.status(200).json({
       message: "Customer deleted successfully",
       customer: deletedCustomer,

@@ -10,11 +10,15 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import Login from "./pages/Login/Login";
 import Navbar from "./components/Navbar/Navbar";
 import Signup from "./pages/Signup/Signup";
-import Feed from "./pages/Feed/Feed";
 import { AuthProvider, useAuth } from "./context/authContext";
 import { ToastProvider } from "./context/toastContext";
 import Campaigns from "./pages/Campaigns/Campaigns";
 import Segments from "./pages/Segments/Segments";
+import Customers from "./pages/Customers/Customers";
+import NotFound from "./pages/NotFound/NotFound";
+import Loading from "./components/Loading/Loading";
+import HomePage from "./pages/HomePage/HomePage";
+import CampaignDetail from "./pages/CampaignDetail/CampaignDetail";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,6 +26,9 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  if (isAuthenticated === undefined) {
+    return <Loading />;
+  }
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -30,8 +37,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
 const PublicRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  if (isAuthenticated === undefined) {
+    return <Loading />;
+  }
   if (isAuthenticated) {
-    return <Navigate to="/feed" replace />;
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 };
@@ -55,6 +65,9 @@ function App() {
 function AppContent() {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  if (isAuthenticated === undefined) {
+    return <Loading />;
+  }
   const showNavbar =
     isAuthenticated && !["/login", "/signup"].includes(location.pathname);
 
@@ -65,11 +78,9 @@ function AppContent() {
         <Route
           path="/"
           element={
-            isAuthenticated ? (
-              <Navigate to="/feed" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
           }
         />
 
@@ -87,15 +98,6 @@ function AppContent() {
             <PublicRoute>
               <Signup />
             </PublicRoute>
-          }
-        />
-
-        <Route
-          path="/feed"
-          element={
-            <ProtectedRoute>
-              <Feed />
-            </ProtectedRoute>
           }
         />
 
@@ -118,15 +120,24 @@ function AppContent() {
         />
 
         <Route
-          path="*"
+          path="/customers"
           element={
-            isAuthenticated ? (
-              <Navigate to="/feed" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <ProtectedRoute>
+              <Customers />
+            </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/campaign/:id"
+          element={
+            <ProtectedRoute>
+              <CampaignDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

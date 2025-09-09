@@ -8,6 +8,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+console.log("PORT:", process.env.PORT);
 
 connectDB();
 

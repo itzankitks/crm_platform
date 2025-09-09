@@ -2,46 +2,37 @@ import { Request, Response } from "express";
 import { Campaign, ICampaign } from "../models/campaign.model";
 import { Segment, ISegment } from "../models/segment.model";
 import { Message, IMessage } from "../models/message.model";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { messageQueue } from "../utils/queues/message.queue";
+import { enqueueCampaignMessages } from "../services/message.service";
 
 const createNewCampaign = async (req: Request, res: Response) => {
   try {
-    const { title, segmentId, messageTemplate } = req.body;
+    const { title, segmentId, messageTemplate, customerIds, intent } = req.body;
 
-    const newCampaign = new Campaign({
-      title: title,
-      segmentId: new mongoose.Types.ObjectId(segmentId),
-      status: Math.floor(Math.random() * 51) + 50,
-      messageTemplate: messageTemplate,
+    const campaign = await Campaign.create({
+      title,
+      segmentId,
+      messageTemplate,
+      customerIds,
+      audienceSize: customerIds.length,
+      intent,
+      status: "pending",
     });
 
-    await newCampaign.save();
-
-    const segment: ISegment | null = await Segment.findById(segmentId).populate(
-      "customerIds"
+    await enqueueCampaignMessages(
+      (campaign._id as Types.ObjectId).toString(),
+      customerIds,
+      messageTemplate
     );
-    if (!segment) {
-      return res.status(404).json({ error: "Segment not found" });
-    }
 
-    for (const customerId of segment.customerIds) {
-      await messageQueue.add("send-message", {
-        campaignId: newCampaign._id,
-        customerId,
-        messageTemplate,
-      });
-    }
-
-    return res
-      .status(201)
-      .json({ campaign: newCampaign, msg: "Messages are queued" });
+    res.status(201).json({
+      message: "Campaign created and messages enqueued",
+      campaign,
+    });
   } catch (error) {
-    console.log("Error while creating Campaign: ", error);
-    if (error instanceof Error) {
-      return res.status(400).json({ error: error.message });
-    }
-    return res.status(400).json({ error: "An unknown error occurred" });
+    console.error(error);
+    res.status(500).json({ error: "Failed to create campaign" });
   }
 };
 
@@ -60,6 +51,7 @@ const getAllCampaigns = async (req: Request, res: Response) => {
 
 const getCampaignById = async (req: Request, res: Response) => {
   try {
+    console.log("Fetching campaign by ID");
     const campaignId = req.params.id;
 
     const campaign: ICampaign | null = await Campaign.findById(campaignId);
@@ -86,18 +78,35 @@ const getCampaignById = async (req: Request, res: Response) => {
 const updateCampaignById = async (req: Request, res: Response) => {
   try {
     const campaignId = req.params.id;
-    const { title, segmentId, messageTemplate, status } = req.body;
+    const {
+      title,
+      segmentId,
+      messageTemplate,
+      status,
+      customerIds,
+      audienceSize,
+      intent,
+    } = req.body;
+
+    const updateObj: Partial<ICampaign> = {};
+    if (title !== undefined) updateObj.title = title;
+    if (segmentId !== undefined)
+      updateObj.segmentId = segmentId
+        ? new mongoose.Types.ObjectId(segmentId)
+        : null;
+    if (messageTemplate !== undefined)
+      updateObj.messageTemplate = messageTemplate;
+    if (status !== undefined) updateObj.status = status;
+    if (customerIds !== undefined)
+      updateObj.customerIds = customerIds.map(
+        (id: string) => new mongoose.Types.ObjectId(id)
+      );
+    if (audienceSize !== undefined) updateObj.audienceSize = audienceSize;
+    if (intent !== undefined) updateObj.intent = intent;
 
     const updatedCampaign: ICampaign | null = await Campaign.findByIdAndUpdate(
       campaignId,
-      {
-        title: title,
-        segmentId: segmentId
-          ? new mongoose.Types.ObjectId(segmentId)
-          : undefined,
-        messageTemplate: messageTemplate,
-        status: status,
-      },
+      updateObj,
       { new: true }
     );
 

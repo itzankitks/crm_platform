@@ -1,38 +1,56 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export interface IRuleCondition {
+  field: "totalSpending" | "countVisits" | "lastActiveAt";
+  operator: ">" | "<" | ">=" | "<=" | "=" | "!=";
+  value: number | string | Date;
+}
+
 export interface ISegment extends Document {
   name: string;
-  query: string;
+  rules: IRuleCondition[];
+  logic: "AND" | "OR";
   userId: mongoose.Types.ObjectId;
-  customerSize: number;
-  customerIds: mongoose.Types.ObjectId[];
 }
+
+const ruleConditionSchema = new Schema<IRuleCondition>(
+  {
+    field: {
+      type: String,
+      enum: ["totalSpending", "countVisits", "lastActiveAt"],
+      required: true,
+    },
+    operator: {
+      type: String,
+      enum: [">", "<", ">=", "<=", "=", "!="],
+      required: true,
+    },
+    value: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
+  },
+  { _id: false }
+);
 
 const segmentSchema = new Schema<ISegment>(
   {
     name: {
       type: String,
       required: true,
+      trim: true,
     },
-    query: {
+    rules: [ruleConditionSchema],
+    logic: {
       type: String,
-      required: true,
+      enum: ["AND", "OR"],
+      default: "AND",
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    customerSize: {
-      type: Number,
-      default: 0,
-    },
-    customerIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Customer",
-      },
-    ],
   },
   { timestamps: true }
 );

@@ -7,12 +7,13 @@ import React, {
 } from "react";
 
 interface User {
+  _id: string;
   name: string;
   email: string;
 }
 
 interface AuthContextType {
-  isAuthenticated: boolean;
+  isAuthenticated: boolean | undefined;
   user: User | null;
   login: (token: string, user: User) => void;
   logout: () => void;
@@ -23,7 +24,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | undefined>(
+    undefined
+  );
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -32,6 +35,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (token && user) {
       setIsAuthenticated(true);
       setUser(JSON.parse(user));
+    } else {
+      setIsAuthenticated(false);
     }
   }, []);
 

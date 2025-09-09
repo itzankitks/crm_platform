@@ -1,31 +1,34 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IMessage extends Document {
-  text: string;
-  campaignId: mongoose.Schema.Types.ObjectId;
-  customerId: mongoose.Schema.Types.ObjectId;
+  campaignId: mongoose.Types.ObjectId;
+  customerId: mongoose.Types.ObjectId;
   customerName?: string;
+  text: string;
   status: "PENDING" | "SENT" | "FAILED";
-  vendorMessageId: mongoose.Types.ObjectId;
+  vendorMessageId?: string;
   deliveredAt?: Date;
 }
 
 const messageSchema = new Schema<IMessage>(
   {
-    text: {
-      type: String,
-      required: true,
-    },
     campaignId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Campaign",
+      required: true,
     },
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
+      required: true,
     },
     customerName: {
       type: String,
+      trim: true,
+    },
+    text: {
+      type: String,
+      required: true,
     },
     status: {
       type: String,
@@ -33,9 +36,9 @@ const messageSchema = new Schema<IMessage>(
       default: "PENDING",
     },
     vendorMessageId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      type: String,
       unique: true,
+      sparse: true,
     },
     deliveredAt: {
       type: Date,
@@ -43,5 +46,7 @@ const messageSchema = new Schema<IMessage>(
   },
   { timestamps: true }
 );
+
+messageSchema.index({ campaignId: 1, customerId: 1 }, { unique: true });
 
 export const Message = mongoose.model<IMessage>("Message", messageSchema);

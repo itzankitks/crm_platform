@@ -1,66 +1,53 @@
 import { Worker } from "bullmq";
-import redis from "../../config/redis";
+import { redisConnection } from "../../config/redis";
 import { Message } from "../../models/message.model";
-import mongoose from "mongoose";
+import axios from "axios";
 
-const worker = new Worker(
+// Simulate vendor API
+async function sendToVendor(customerName: string, text: string) {
+  // 90% success, 10% failure
+  const isSuccess = Math.random() < 0.9;
+
+  return {
+    success: isSuccess,
+    vendorMessageId: `vendor-${Date.now()}-${Math.floor(
+      Math.random() * 10000
+    )}`,
+  };
+}
+
+async function sendToVendorSim(
+  vendorMessageId: string,
+  status: "SENT" | "FAILED"
+) {
+  await axios.post("http://localhost:8000/api/delivery/receipt", {
+    vendorMessageId,
+    status,
+  });
+}
+
+export const messageWorker = new Worker(
   "message-queue",
   async (job) => {
-    const { campaignId, customerId, messageTemplate } = job.data;
-    console.log(`Processing job ${job.id} for campaign ${campaignId}`);
+    const { messageId } = job.data;
 
-    try {
-      const response = await fetch(`${process.env.API_URL}/vendor/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          campaignId,
-          customerId,
-          message: messageTemplate,
-        }),
-      });
+    const vendorResp = await sendToVendor(
+      job.data.customerName || "User",
+      job.data.text
+    );
 
-      if (!response.ok) {
-        throw new Error(`Vendor API error: ${response.status}`);
-      }
+    const status = vendorResp.success ? "SENT" : "FAILED";
+    await sendToVendorSim(vendorResp.vendorMessageId, status);
 
-      const result = await response.json();
-      console.log(`Vendor API response: ${JSON.stringify(result)}`);
-
-      const session = await mongoose.startSession();
-      session.startTransaction();
-      try {
-        await Message.create(
-          [
-            {
-              campaignId,
-              customerId,
-              text: messageTemplate,
-              status: "PENDING",
-              vendorMessageId: result.vendorMessageId,
-            },
-          ],
-          { session }
-        );
-        await session.commitTransaction();
-      } catch (error) {
-        await session.abortTransaction();
-        throw error;
-      } finally {
-        session.endSession();
-      }
-    } catch (error) {
-      console.error(`Error processing job ${job.id}:`, error);
-      throw error;
-    }
+    return { status, vendorMessageId: vendorResp.vendorMessageId };
   },
-  { connection: redis }
+  { connection: redisConnection }
 );
 
-worker.on("completed", (job) => {
-  console.log(`Job ${job.id} completed`);
+messageWorker.on("completed", (job) => {
+  console.log(`Message job ${job.id} completed`);
 });
 
-worker.on("failed", (job, err) => {
-  console.error(`Job ${job?.id} failed:`, err);
+messageWorker.on("failed", (job, err) => {
+  console.error(`Message job ${job?.id} failed:`, err);
 });

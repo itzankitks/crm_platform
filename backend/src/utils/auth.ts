@@ -13,9 +13,7 @@ interface DecodedToken {
 
 const findUserInDb = async (id: string): Promise<IUser | null> => {
   try {
-    console.log("Finding user with ID:", id);
     const user = await User.findById(id);
-    console.log("User found in DB:", user);
     return user ? user.toObject() : null;
   } catch (error) {
     console.error("Error finding user in DB:", error);

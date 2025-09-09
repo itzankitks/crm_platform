@@ -1,10 +1,13 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface ICampaign extends Document {
   title: string;
   segmentId: mongoose.Types.ObjectId | null;
-  status: number;
+  status: "pending" | "draft" | "active" | "completed";
   messageTemplate: string;
+  customerIds: mongoose.Types.ObjectId[]; // locked-in audience
+  audienceSize: number; // convenience for history/stats
+  intent?: string;
 }
 
 const campaignSchema = new Schema<ICampaign>(
@@ -12,6 +15,7 @@ const campaignSchema = new Schema<ICampaign>(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
     segmentId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -19,14 +23,28 @@ const campaignSchema = new Schema<ICampaign>(
       default: null,
     },
     status: {
-      type: Number,
-      min: 50,
-      max: 100,
-      default: 50,
+      type: String,
+      enum: ["pending", "draft", "active", "completed"],
+      default: "pending",
     },
     messageTemplate: {
       type: String,
       required: true,
+      trim: true,
+    },
+    customerIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+      },
+    ],
+    audienceSize: {
+      type: Number,
+      default: 0,
+    },
+    intent: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true }
