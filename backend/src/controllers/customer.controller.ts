@@ -9,55 +9,6 @@ interface CustomerData {
   phone?: string;
 }
 
-// const createCustomer = async (req: Request, res: Response) => {
-//   try {
-//     const customerData: CustomerData = req.body;
-//     if (
-//       !customerData.name ||
-//       customerData.name.length === 0 ||
-//       customerData.name.length > 100
-//     ) {
-//       return res.status(400).json({ error: "Name is invalid" });
-//     }
-
-//     const existingCustomer: ICustomer | null = await Customer.findOne({
-//       name: customerData.name,
-//     });
-//     if (existingCustomer) {
-//       return res.status(400).json({ error: "Customer already exists" });
-//     }
-
-//     const newCustomer = await Customer.create({
-//       name: customerData.name,
-//       email: customerData.email,
-//       phone: customerData.phone,
-//     });
-
-//     await redisConnection.publish(
-//       "customers",
-//       JSON.stringify({
-//         type: "CUSTOMER_CREATED",
-//         payload: {
-//           customerId: newCustomer._id,
-//           name: newCustomer.name,
-//         },
-//       })
-//     );
-
-//     return res.status(201).json({
-//       message: "Customer created successfully",
-//       customer: newCustomer,
-//     });
-//   } catch (error) {
-//     console.log("Error in create customer: ", error);
-//     if (error instanceof Error) {
-//       return res.status(400).json({ error: error.message });
-//     }
-//     return res.status(400).json({ error: "An unknown error occurred" });
-//   }
-// };
-
-// POST /customers
 const createCustomers = async (req: Request, res: Response) => {
   try {
     const { customers } = req.body;
@@ -65,13 +16,11 @@ const createCustomers = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "At least one customer required" });
     }
 
-    // validate
     for (const cust of customers) {
       if (!cust.name)
         return res.status(400).json({ error: "Customer name required" });
     }
 
-    // publish to Redis
     await redisPublisher.publish("customers:new", JSON.stringify(customers));
 
     return res.status(202).json({

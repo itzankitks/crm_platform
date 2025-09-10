@@ -8,7 +8,6 @@ export const parseExpression = (expression: string): any => {
     (match) => `${match} AND `
   );
 
-  // Split on AND/OR while keeping them
   const tokens = expression.split(/\s+(AND|OR)\s+/);
 
   const conditions: any[] = [];

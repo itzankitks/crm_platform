@@ -31,7 +31,11 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
+            <div
+              className="flex items-center space-x-3"
+              onClick={() => navigate("/")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="h-8 w-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-sm">
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
@@ -75,6 +79,9 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{userName}</p>
+                        <p className="text-xs text-gray-600 -mt-0.5">
+                          {user?.email}
+                        </p>
                       </div>
                     </div>
                   </div>

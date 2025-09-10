@@ -5,6 +5,8 @@ import connectDB from "./config/db";
 import routes from "./routes";
 import "./workers/customer.worker";
 import "./workers/order.worker";
+import "./workers/message.sender.worker";
+import "./workers/delivery.receipt.batcher";
 
 dotenv.config();
 

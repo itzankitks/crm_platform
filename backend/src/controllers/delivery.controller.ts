@@ -12,22 +12,18 @@ export const deliveryReceipt = async (req: Request, res: Response) => {
         .json({ error: "vendorMessageId and status required" });
     }
 
-    const message = await Message.findOne({ vendorMessageId });
-    if (!message) {
-      return res.status(404).json({ error: "Message not found" });
-    }
+    await redisPublisher.publish(
+      "delivery:receipts",
+      JSON.stringify({
+        vendorMessageId,
+        status,
+        receivedAt: new Date().toISOString(),
+      })
+    );
 
-    message.status = status;
-    if (status === "SENT") {
-      message.deliveredAt = new Date();
-    }
-    await message.save();
-
-    return res
-      .status(200)
-      .json({ message: "Delivery status updated", data: message });
-  } catch (error) {
-    console.error("Delivery receipt error:", error);
+    return res.status(202).json({ message: "Receipt queued" });
+  } catch (err) {
+    console.error("deliveryReceipt error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };

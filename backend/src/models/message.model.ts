@@ -37,8 +37,7 @@ const messageSchema = new Schema<IMessage>(
     },
     vendorMessageId: {
       type: String,
-      unique: true,
-      sparse: true,
+      required: false,
     },
     deliveredAt: {
       type: Date,
@@ -48,5 +47,13 @@ const messageSchema = new Schema<IMessage>(
 );
 
 messageSchema.index({ campaignId: 1, customerId: 1 }, { unique: true });
+
+messageSchema.index(
+  { vendorMessageId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { vendorMessageId: { $exists: true } },
+  }
+);
 
 export const Message = mongoose.model<IMessage>("Message", messageSchema);

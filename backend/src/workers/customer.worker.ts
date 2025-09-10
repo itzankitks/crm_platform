@@ -1,4 +1,3 @@
-// backend/src/workers/customer.worker.ts
 import { redisSubscriber, redisPublisher } from "../config/redis";
 import { Customer } from "../models/customer.model";
 
@@ -17,7 +16,6 @@ const processCustomers = () => {
         const customers = JSON.parse(message);
         console.log(`Received ${customers.length} customers for processing`);
 
-        // Save each customer to MongoDB
         for (const customer of customers) {
           await Customer.create(customer);
           console.log(`Created customer: ${customer.name}`);
@@ -29,5 +27,4 @@ const processCustomers = () => {
   });
 };
 
-// Start the worker
 processCustomers();

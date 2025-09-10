@@ -26,14 +26,12 @@ const processOrders = () => {
             continue;
           }
 
-          // Create order
           await Order.create({
             customerId,
             cost,
             createdAt: new Date(),
           });
 
-          // Update customer stats
           customer.totalSpending += cost;
           customer.countVisits += 1;
           await customer.save();
@@ -47,5 +45,4 @@ const processOrders = () => {
   });
 };
 
-// start the worker
 processOrders();

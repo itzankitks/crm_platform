@@ -16,7 +16,6 @@ const createOrders = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "At least one order required" });
     }
 
-    // Validation
     for (const o of orders) {
       if (!o.customerId)
         return res.status(400).json({ error: "Customer ID required" });
@@ -24,7 +23,6 @@ const createOrders = async (req: Request, res: Response) => {
         return res.status(400).json({ error: "Cost must be > 0" });
     }
 
-    // Publish to Redis
     await redisPublisher.publish("orders:new", JSON.stringify(orders));
 
     return res.status(202).json({

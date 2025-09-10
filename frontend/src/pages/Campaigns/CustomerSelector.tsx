@@ -26,24 +26,20 @@ const CustomerSelector: React.FC<Props> = ({
     const { source, destination } = result;
     if (!destination) return;
 
-    // Dragging from Available to Selected
     if (
       source.droppableId === "available" &&
       destination.droppableId === "selected"
     ) {
       const customer = available[source.index];
-      // Only add if not already in selected
+
       if (!selected.find((c) => c._id === customer._id)) {
-        // Add to selected
         onSelectedChange([...selected, customer]);
-        // Remove from available
+
         const updatedAvailable = [...available];
         updatedAvailable.splice(source.index, 1);
         onAvailableChange(updatedAvailable);
       }
-    }
-    // Reordering within Selected
-    else if (
+    } else if (
       source.droppableId === "selected" &&
       destination.droppableId === "selected"
     ) {
@@ -51,19 +47,16 @@ const CustomerSelector: React.FC<Props> = ({
       const [moved] = reordered.splice(source.index, 1);
       reordered.splice(destination.index, 0, moved);
       onSelectedChange(reordered);
-    }
-    // Dragging from Selected back to Available
-    else if (
+    } else if (
       source.droppableId === "selected" &&
       destination.droppableId === "available"
     ) {
       const customer = selected[source.index];
-      // Only add if not already in available
+
       if (!available.find((c) => c._id === customer._id)) {
-        // Add to available
         onAvailableChange([...available, customer]);
       }
-      // Remove from selected
+
       const updatedSelected = [...selected];
       updatedSelected.splice(source.index, 1);
       onSelectedChange(updatedSelected);

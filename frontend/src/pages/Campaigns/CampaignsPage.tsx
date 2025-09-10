@@ -8,12 +8,13 @@ import {
 } from "../../utils/endPoints";
 import CustomerSelector from "./CustomerSelector";
 import { generateMessageTemplates } from "../../utils/gemini";
+import { useToast } from "../../context/toastContext";
 
 interface Segment {
   _id: string;
   name: string;
   expression: string;
-  audienceSize: number;
+  userId: string;
 }
 
 interface Customer {
@@ -40,6 +41,7 @@ const CampaignPage: React.FC = () => {
   const [title, setTitle] = useState("");
   const [aiTemplates, setAITemplates] = useState<string[]>([]);
   const [generatingTemplates, setGeneratingTemplates] = useState(false);
+  const { showToast } = useToast();
 
   const fetchSegments = async () => {
     setLoading(true);
@@ -70,7 +72,7 @@ const CampaignPage: React.FC = () => {
         }
       );
       setAvailableCustomers(res.data.customers || []);
-      setSelectedCustomers([]); // reset when segment changes
+      setSelectedCustomers([]);
     } catch (err) {
       console.error("Error fetching customers:", err);
     }
@@ -88,7 +90,10 @@ const CampaignPage: React.FC = () => {
 
   const handleGenerateTemplates = async () => {
     if (!selectedSegmentId || !title) {
-      alert("Please select a segment and enter a campaign title first");
+      showToast(
+        "Please select a segment and enter a campaign title first",
+        "error"
+      );
       return;
     }
 
@@ -104,7 +109,6 @@ const CampaignPage: React.FC = () => {
       setAITemplates(templates);
     } catch (error) {
       console.error("Error generating templates:", error);
-      // Fallback to default templates
       setAITemplates([
         `Hi {name}, check out our exciting ${title} campaign!`,
         `{name}, don't miss our special ${title} offer just for you!`,
@@ -121,10 +125,11 @@ const CampaignPage: React.FC = () => {
   };
 
   const handleCreateCampaign = async () => {
-    if (!selectedSegmentId) return alert("Select a segment first");
-    if (!messageTemplate.trim()) return alert("Enter a message template");
+    if (!selectedSegmentId) return showToast("Select a segment first", "error");
+    if (!messageTemplate.trim())
+      return showToast("Enter a message template", "error");
     if (selectedCustomers.length === 0)
-      return alert("Select at least one customer");
+      return showToast("Select at least one customer", "error");
 
     setCreating(true);
     try {
@@ -143,15 +148,15 @@ const CampaignPage: React.FC = () => {
           },
         }
       );
-      alert("Campaign created successfully!");
+      showToast("Campaign created successfully!", "success");
       setMessageTemplate("");
       setSelectedSegmentId("");
       setAvailableCustomers([]);
       setSelectedCustomers([]);
-      navigate("/");
+      navigate("/campaign");
     } catch (err) {
       console.error("Error creating campaign:", err);
-      alert("Failed to create campaign");
+      showToast("Failed to create campaign", "error");
     } finally {
       setCreating(false);
     }
@@ -187,7 +192,7 @@ const CampaignPage: React.FC = () => {
               <option value="">-- Choose Segment --</option>
               {segments.map((seg) => (
                 <option key={seg._id} value={seg._id}>
-                  {seg.name} ({seg.audienceSize} customers)
+                  {seg.name} ({seg.expression})
                 </option>
               ))}
             </select>
@@ -195,9 +200,7 @@ const CampaignPage: React.FC = () => {
           {selectedSegment && (
             <p className="mt-2 text-gray-600">
               Audience Size:{" "}
-              <span className="font-medium">
-                {selectedSegment.audienceSize}
-              </span>
+              <span className="font-medium">{availableCustomers.length}</span>
             </p>
           )}
         </div>
@@ -211,7 +214,6 @@ const CampaignPage: React.FC = () => {
           />
         )}
 
-        {/* Message Template */}
         <div className="mb-4 mt-6">
           <label className="block text-gray-700 mb-1">Message Template</label>
           <div className="relative">
@@ -237,7 +239,6 @@ const CampaignPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Create Button */}
         <button
           onClick={handleCreateCampaign}
           className={`bg-blue-600 text-white px-4 py-2 rounded ${

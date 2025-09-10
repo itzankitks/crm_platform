@@ -4,12 +4,15 @@ import { Segment, ISegment } from "../models/segment.model";
 import { Message, IMessage } from "../models/message.model";
 import mongoose, { Types } from "mongoose";
 import { messageQueue } from "../queues/message.queue";
-import { enqueueCampaignMessages } from "../services/message.service";
+import { enqueueCampaignMessages } from "../services/campaign.service";
 import { redisPublisher } from "../config/redis";
 
 const createNewCampaign = async (req: Request, res: Response) => {
   try {
     const { title, segmentId, messageTemplate, customerIds, intent } = req.body;
+
+    if (!segmentId)
+      return res.status(400).json({ error: "segmentId required" });
 
     const campaign = await Campaign.create({
       title,
@@ -21,13 +24,14 @@ const createNewCampaign = async (req: Request, res: Response) => {
       status: "pending",
     });
 
-    await redisPublisher.publish(
-      "campaigns:new",
-      JSON.stringify({ _id: campaign._id })
+    await enqueueCampaignMessages(
+      (campaign._id as Types.ObjectId).toString(),
+      customerIds,
+      messageTemplate
     );
 
     res.status(201).json({
-      message: "Campaign created and queued for processing",
+      message: "Campaign created and messages queued",
       campaign,
     });
   } catch (error) {
@@ -38,7 +42,9 @@ const createNewCampaign = async (req: Request, res: Response) => {
 
 const getAllCampaigns = async (req: Request, res: Response) => {
   try {
-    const allCampaigns: ICampaign[] = await Campaign.find({}).sort({createdAt: -1});
+    const allCampaigns: ICampaign[] = await Campaign.find({}).sort({
+      createdAt: -1,
+    });
     return res.status(200).json({ campaigns: allCampaigns });
   } catch (error) {
     console.log("Error while fetching Campaigns: ", error);
@@ -58,19 +64,57 @@ const getCampaignById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "The Campaign does not exist" });
     }
 
-    const messages: IMessage[] = await Message.find({ campaignId: campaignId });
+    const [total, sent, failed, pending] = await Promise.all([
+      Message.countDocuments({ campaignId }),
+      Message.countDocuments({ campaignId, status: "SENT" }),
+      Message.countDocuments({ campaignId, status: "FAILED" }),
+      Message.countDocuments({ campaignId, status: "PENDING" }),
+    ]);
 
-    if (messages.length === 0) {
-      return res.status(404).json({ error: "No Messages Found" });
-    }
-
-    return res.status(200).json({ campaign: campaign, messages: messages });
+    return res.status(200).json({
+      campaign,
+      stats: {
+        total,
+        sent,
+        failed,
+        pending,
+      },
+    });
   } catch (error) {
     console.log("Error while fetching Campaign: ", error);
     if (error instanceof Error) {
       return res.status(400).json({ error: error.message });
     }
     return res.status(400).json({ error: "An unknown error occurred" });
+  }
+};
+
+const getCampaignStats = async (req: Request, res: Response) => {
+  try {
+    console.log("Campaign Id:", req.params.id);
+    const campaignId = req.params.id;
+    const campaign = await Campaign.findById(campaignId).lean();
+    if (!campaign) return res.status(404).json({ error: "Not found" });
+
+    const [total, sent, failed] = await Promise.all([
+      Message.countDocuments({ campaignId }),
+      Message.countDocuments({ campaignId, status: "SENT" }),
+      Message.countDocuments({ campaignId, status: "FAILED" }),
+    ]);
+    console.log({ total, sent, failed });
+
+    return res.json({
+      campaignId,
+      audienceSize: campaign.audienceSize ?? 0,
+      stats: {
+        total,
+        sent,
+        failed,
+      },
+    });
+  } catch (err) {
+    console.error("getCampaignStats error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -154,6 +198,7 @@ export {
   createNewCampaign,
   getAllCampaigns,
   getCampaignById,
+  getCampaignStats,
   updateCampaignById,
   deleteCampaignById,
 };

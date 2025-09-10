@@ -8,6 +8,7 @@ import Toast from "../../components/Toast/Toast";
 import { useToast } from "../../context/toastContext";
 
 interface User {
+  _id: string;
   name: string;
   email: string;
 }

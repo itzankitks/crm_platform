@@ -1,58 +1,3 @@
-// import { useState } from "react";
-
-// interface DropdownProps {
-//   label: string;
-//   options?: string[];
-//   onSelect?: (option: string) => void;
-//   selectedOption?: string;
-//   type?: string;
-// }
-
-// const Dropdown: React.FC<DropdownProps> = ({
-//   label,
-//   options = [],
-//   onSelect,
-//   selectedOption,
-// }) => {
-//   const [isOpen, setIsOpen] = useState(false);
-
-//   const toggleDropdown = () => {
-//     setIsOpen(!isOpen);
-//   };
-
-//   const handleSelect = (option: string) => {
-//     onSelect && onSelect(option);
-//     setIsOpen(false);
-//   };
-
-//   return (
-//     <div className="relative inline-block w-40 mx-1.5">
-//       <button
-//         onClick={toggleDropdown}
-//         className="w-40 px-4 py-2.5 cursor-pointer bg-cyan-500 text-white border-none rounded"
-//         type="button"
-//       >
-//         {selectedOption || label}
-//       </button>
-//       {isOpen && (
-//         <div className="absolute bg-white border border-cyan-500 z-10 w-[9.75rem]">
-//           {options.map((option, index) => (
-//             <div
-//               key={index}
-//               onClick={() => handleSelect(option)}
-//               className="px-3 py-2 cursor-pointer hover:bg-cyan-500 hover:text-white"
-//             >
-//               {option}
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Dropdown;
-
 import { useEffect, useRef, useState } from "react";
 
 interface DropdownProps {
@@ -94,7 +39,6 @@ const Dropdown: React.FC<DropdownProps> = ({
     setIsOpen(false);
   };
 
-  // ...existing code...
   const [dropdownPosition, setDropdownPosition] = useState<{
     top: number;
     left: number;

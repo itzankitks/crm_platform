@@ -1,272 +1,183 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ArrowLeft } from "lucide-react";
 import {
-  GET_CAMPAIGN_ENDPOINT,
-  GET_SEGMENTS_ENDPOINT,
-} from "../../utils/endPoints";
-import { useParams } from "react-router-dom";
-import { PieChart } from "@mui/x-charts";
-import {
-  MessageSquare,
-  Users,
-  PieChart as PieChartIcon,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
-
-interface Message {
-  _id: string;
-  message: string;
-  customerName: string;
-  status: number;
-}
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import Loading from "../../components/Loading/Loading";
+import { GET_CAMPAIGN_ENDPOINT } from "../../utils/endPoints";
 
 interface Campaign {
+  _id: string;
   title: string;
+  status: string;
   messageTemplate: string;
-  status: number;
-  segmentId: string;
+  createdAt: string;
+  audienceSize: number;
 }
 
-interface Segment {
-  customerSize: number;
+interface CampaignStats {
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
 }
 
-const CampaignDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [campaignData, setCampaignData] = useState<Campaign>({} as Campaign);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [segmentDetails, setSegmentDetails] = useState<Segment>({} as Segment);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+interface CampaignResponse {
+  campaign: Campaign;
+  stats: CampaignStats;
+}
+
+const COLORS = ["#22c55e", "#ef4444", "#eab308", "#94a3b8"];
+
+const CampaignDetails: React.FC = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [campaignData, setCampaignData] = useState<CampaignResponse | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCampaignDetails = async () => {
+    const fetchCampaign = async () => {
       try {
         setLoading(true);
-        const getData = await axios.get(`${GET_CAMPAIGN_ENDPOINT}/${id}`);
-        const fetchedCampaignData = getData.data.campaign;
-        setCampaignData(fetchedCampaignData);
-
-        if (fetchedCampaignData.segmentId) {
-          const segmentId = fetchedCampaignData.segmentId;
-          const getSegment = await axios.get(
-            `${GET_SEGMENTS_ENDPOINT}/${segmentId}`
-          );
-          setSegmentDetails(getSegment.data);
-        }
-
-        setMessages(getData.data.message.flat());
+        const { data } = await axios.get(`${GET_CAMPAIGN_ENDPOINT}/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setCampaignData(data);
       } catch (err) {
         console.error("Error fetching campaign details:", err);
-        setError("Failed to load campaign details. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
-
-    fetchCampaignDetails();
+    fetchCampaign();
   }, [id]);
 
-  if (loading) {
+  if (loading) return <Loading />;
+  if (!campaignData)
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-      </div>
+      <div className="text-center py-10 text-red-500">Campaign not found</div>
     );
-  }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            Error Loading Campaign
-          </h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const { campaign, stats } = campaignData;
+
+  const chartData = [
+    { name: "Sent", value: stats.sent },
+    { name: "Failed", value: stats.failed },
+    { name: "Pending", value: stats.pending },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-cyan-100 rounded-lg">
-              <MessageSquare className="w-6 h-6 text-cyan-600" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-              {campaignData.title}
-            </h1>
-          </div>
-          <div className="h-1 w-24 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"></div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-blue-600 hover:text-blue-800 font-medium mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Campaigns
+        </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700">
-                Message Template
-              </h3>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {campaignData.messageTemplate}
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {campaign.title}
+          </h1>
+          <p className="text-gray-500 mb-4">{campaign.messageTemplate}</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <div>
+              <p className="text-sm text-gray-500">Status</p>
+              <p className="text-lg font-semibold capitalize">
+                {campaign.status}
               </p>
             </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-5 h-5 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700">
-                Audience Size
-              </h3>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-gray-800">
-                {segmentDetails.customerSize || "N/A"}
+            <div>
+              <p className="text-sm text-gray-500">Created At</p>
+              <p className="text-lg font-semibold">
+                {new Date(campaign.createdAt).toLocaleDateString()}
               </p>
-              <p className="text-sm text-gray-500 mt-1">Customers</p>
             </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <PieChartIcon className="w-5 h-5 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700">
-                Delivery Rate
-              </h3>
+            <div>
+              <p className="text-sm text-gray-500">Audience Size</p>
+              <p className="text-lg font-semibold">{campaign.audienceSize}</p>
             </div>
-            <div className="flex justify-center">
-              <PieChart
-                colors={["#10b981", "#ef4444"]}
-                series={[
-                  {
-                    data: [
-                      {
-                        value: campaignData.status || 0,
-                        label: `${campaignData.status || 0}% Success`,
-                      },
-                      {
-                        value: 100 - (campaignData.status || 0),
-                        label: `${100 - (campaignData.status || 0)}% Failure`,
-                      },
-                    ],
-                    innerRadius: 40,
-                    outerRadius: 80,
-                    cornerRadius: 5,
-                    paddingAngle: 2,
-                  },
-                ]}
-                width={200}
-                height={150}
-                slotProps={{
-                  legend: {
-                    // direction: "row", // Removed unsupported property
-                  },
-                }}
-              />
-            </div>
-            <div className="flex justify-center gap-8 mt-4 text-sm">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>{campaignData.status || 0}% Success</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <XCircle className="w-4 h-4 text-red-500" />
-                <span>{100 - (campaignData.status || 0)}% Failure</span>
-              </div>
+            <div>
+              <p className="text-sm text-gray-500">Total Messages</p>
+              <p className="text-lg font-semibold">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-cyan-500" />
-              Message Delivery Status
-            </h2>
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
+            Delivery Stats
+          </h2>
 
-            <div className="overflow-x-auto">
-              <div className="min-w-full inline-block">
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-t-lg border-b border-gray-200 font-semibold text-gray-700">
-                  <div className="md:col-span-2">Message</div>
-                  <div className="hidden md:block">Customer Name</div>
-                  <div>Status</div>
-                </div>
-
-                <div className="max-h-[400px] overflow-y-auto">
-                  {messages.length > 0 ? (
-                    messages.map((message) => (
-                      <div
-                        key={message._id}
-                        className="grid grid-cols-3 md:grid-cols-4 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="md:col-span-2 text-gray-700 break-words">
-                          {message.message}
-                        </div>
-                        <div className="hidden md:block text-gray-700">
-                          {message.customerName}
-                        </div>
-                        <div className="flex items-center justify-center">
-                          <PieChart
-                            colors={["#10b981", "#ef4444"]}
-                            series={[
-                              {
-                                data: [
-                                  { value: message.status, color: "#10b981" },
-                                  {
-                                    value: 100 - message.status,
-                                    color: "#ef4444",
-                                  },
-                                ],
-                                innerRadius: 15,
-                                outerRadius: 30,
-                                cornerRadius: 3,
-                                paddingAngle: 1,
-                              },
-                            ]}
-                            width={80}
-                            height={60}
-                            slotProps={{
-                              legend: {
-                                // hidden: true,
-                              },
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center text-gray-500">
-                      <p>No messages found for this campaign</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-green-50 p-4 rounded-lg">
+              <p className="text-sm text-green-600 font-medium">Sent</p>
+              <p className="text-2xl font-bold text-green-800">{stats.sent}</p>
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg">
+              <p className="text-sm text-red-600 font-medium">Failed</p>
+              <p className="text-2xl font-bold text-red-800">{stats.failed}</p>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <p className="text-sm text-yellow-600 font-medium">Pending</p>
+              <p className="text-2xl font-bold text-yellow-800">
+                {stats.pending}
+              </p>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-600 font-medium">Total</p>
+              <p className="text-2xl font-bold text-blue-800">{stats.total}</p>
             </div>
           </div>
+
+          {stats.total > 0 ? (
+            <div className="h-80">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={120}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {chartData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">
+              No message stats available yet.
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default CampaignDetail;
+export default CampaignDetails;

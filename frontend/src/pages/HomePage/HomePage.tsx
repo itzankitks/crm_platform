@@ -42,11 +42,9 @@ const HomePage: React.FC = () => {
       try {
         setLoading(true);
 
-        // Fetch campaigns
         const { data: campaignResp } = await axios.get(GET_CAMPAIGN_ENDPOINT);
         setCampaignData(campaignResp.campaigns.slice(0, 4) || []);
 
-        // Fetch segments (backend returns an array directly)
         const { data: segmentResp } = await axios.get(GET_SEGMENTS_ENDPOINT, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -54,7 +52,6 @@ const HomePage: React.FC = () => {
         });
         setSegments(segmentResp.segments.slice(0, 4) || []);
 
-        // Fetch customers
         const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT);
         setCustomers(customerResp.customers || []);
       } catch (error) {

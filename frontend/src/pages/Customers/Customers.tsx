@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { GET_CUSTOMER_ENDPOINT } from "../../utils/endPoints";
 import Loading from "../../components/Loading/Loading";
+import { useToast } from "../../context/toastContext";
 
 interface Customer {
   _id: string;
@@ -26,6 +27,7 @@ const Customers: React.FC = () => {
   const [newCustomers, setNewCustomers] = useState<NewCustomer[]>([
     { name: "", email: "", phone: "" },
   ]);
+  const { showToast } = useToast();
 
   const fetchCustomers = async () => {
     try {
@@ -80,12 +82,11 @@ const Customers: React.FC = () => {
       });
       console.log("Create response:", data);
 
-      alert(`${data.count} customers queued for creation!`);
+      showToast(`${data.count} customers queued for creation!`, "success");
 
       setShowCreateModal(false);
       setNewCustomers([{ name: "", email: "", phone: "" }]);
 
-      // Optionally refetch the customer list
       fetchCustomers();
     } catch (err) {
       console.error("Error creating customers:", err);

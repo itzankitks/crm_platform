@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Loading from "../../components/Loading/Loading";
 import {
   GET_CUSTOMER_ENDPOINT,
   GET_ORDER_ENDPOINT,
 } from "../../utils/endPoints";
+import { useToast } from "../../context/toastContext";
 
 interface Customer {
   _id: string;
@@ -21,6 +22,7 @@ interface OrderData {
   customerId: string;
   cost: number | string;
   status?: string;
+  createdAt?: string;
 }
 
 const Orders: React.FC = () => {
@@ -32,33 +34,34 @@ const Orders: React.FC = () => {
   const [newOrders, setNewOrders] = useState<OrderData[]>([
     { customerId: "", cost: "" },
   ]);
+  const { showToast } = useToast();
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       const { data } = await axios.get(GET_CUSTOMER_ENDPOINT);
       setCustomers(data.customers || []);
     } catch (err) {
       setError("Failed to fetch customers.");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const { data } = await axios.get(GET_ORDER_ENDPOINT);
       setOrders(data.orders || []);
     } catch (err) {
       setError("Failed to fetch orders.");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCustomers();
-    fetchOrders();
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      await Promise.all([fetchCustomers(), fetchOrders()]);
+      setLoading(false);
+    };
+    fetchData();
+  }, [fetchCustomers, fetchOrders]);
 
   const handleAddOrderField = () => {
     setNewOrders([...newOrders, { customerId: "", cost: "" }]);
@@ -76,40 +79,59 @@ const Orders: React.FC = () => {
     value: string | number
   ) => {
     const updated = [...newOrders];
-
     if (field === "customerId") {
-      updated[index][field] = value as string; // TypeScript now knows it's a string
+      updated[index][field] = value as string;
     } else if (field === "cost") {
-      updated[index][field] = value as number | ""; // TypeScript knows cost can be number | ""
+      updated[index][field] = value as number | "";
     }
-
     setNewOrders(updated);
   };
 
   const handleCreateOrders = async () => {
     try {
-      // Basic validation
       for (const o of newOrders) {
-        if (!o.customerId) return alert("Select a customer for each order");
+        if (!o.customerId)
+          return showToast("Select a customer for each order", "error");
         if (!o.cost || Number(o.cost) <= 0)
-          return alert("Cost must be greater than 0");
+          return showToast("Cost must be greater than 0", "error");
       }
 
       const { data } = await axios.post(GET_ORDER_ENDPOINT, {
         orders: newOrders,
       });
-      console.log("Create orders response:", data);
 
-      alert(`${newOrders.length} orders queued for creation!`);
+      showToast(`${newOrders.length} orders queued for creation!`, "success");
 
+      const newOrdersWithIds = newOrders.map((order) => ({
+        ...order,
+        _id: `temp-${Math.random().toString(36).substr(2, 9)}`,
+        status: "PENDING",
+        createdAt: new Date().toISOString(),
+      }));
+
+      setOrders((prevOrders) => [...newOrdersWithIds, ...prevOrders]);
       setShowCreateModal(false);
       setNewOrders([{ customerId: "", cost: "" }]);
 
-      // Optionally refetch the orders list
-      fetchOrders();
+      const pollForUpdates = async () => {
+        try {
+          const { data: updatedData } = await axios.get(GET_ORDER_ENDPOINT);
+          setOrders(updatedData.orders || []);
+
+          clearInterval(pollInterval);
+        } catch (err) {
+          console.error("Error polling for updates:", err);
+        }
+      };
+
+      const pollInterval = setInterval(pollForUpdates, 2000);
+
+      setTimeout(() => {
+        clearInterval(pollInterval);
+      }, 30000);
     } catch (err) {
       console.error("Error creating orders:", err);
-      setError("Failed to create orders.");
+      showToast("Failed to create orders", "error");
     }
   };
 
@@ -121,6 +143,13 @@ const Orders: React.FC = () => {
       </div>
     );
 
+  const sortedOrders = [...orders].sort((a, b) => {
+    if (!a.createdAt && !b.createdAt) return 0;
+    if (!a.createdAt) return 1;
+    if (!b.createdAt) return -1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -131,6 +160,16 @@ const Orders: React.FC = () => {
             onClick={() => setShowCreateModal(true)}
           >
             + Create New Orders
+          </button>
+        </div>
+
+        {/* Refresh button */}
+        <div className="mb-4">
+          <button
+            onClick={fetchOrders}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+          >
+            Refresh Orders
           </button>
         </div>
 
@@ -151,17 +190,33 @@ const Orders: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Created At
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {orders.map((order, idx) => {
+              {sortedOrders.map((order) => {
                 const customer = customers.find(
                   (c) => c._id === order.customerId
                 );
+
+                const isTempOrder = order._id?.startsWith("temp-");
+
                 return (
-                  <tr key={idx} className="hover:bg-gray-50">
+                  <tr
+                    key={order._id}
+                    className={`hover:bg-gray-50 ${
+                      isTempOrder ? "animate-pulse bg-blue-50" : ""
+                    }`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order._id || "-"}
+                      {isTempOrder && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          (Processing...)
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {customer ? customer.name : order.customerId}
@@ -172,11 +227,19 @@ const Orders: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {order.status || "-"}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleString()
+                        : new Date().toLocaleString()}
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          {orders.length === 0 && (
+            <div className="p-6 text-center text-gray-500">No orders found</div>
+          )}
         </div>
 
         {/* Orders Modal */}

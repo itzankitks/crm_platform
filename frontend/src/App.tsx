@@ -21,6 +21,7 @@ import CampaignDetail from "./pages/CampaignDetail/CampaignDetail";
 import SegmentsPage from "./pages/Segments/SegmentsPage";
 import Orders from "./pages/Orders/Orders";
 import Campaigns from "./pages/Campaigns/Campaigns";
+import CampaignHistory from "./pages/Campaigns/CampaignHistory";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -117,6 +118,15 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <CampaignsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/campaign/stats"
+          element={
+            <ProtectedRoute>
+              <CampaignHistory />
             </ProtectedRoute>
           }
         />

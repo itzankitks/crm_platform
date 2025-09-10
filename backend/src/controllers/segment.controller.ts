@@ -38,7 +38,6 @@ export const createSegment = async (
   }
 };
 
-// Get all segments for logged-in user
 export const getAllSegments = async (
   req: AuthenticatedRequest,
   res: Response
@@ -53,7 +52,6 @@ export const getAllSegments = async (
   }
 };
 
-// Get segment by ID
 export const getSegmentById = async (
   req: AuthenticatedRequest,
   res: Response
@@ -68,7 +66,6 @@ export const getSegmentById = async (
   }
 };
 
-// GET /segments/:id/customers
 export const getCustomersForSegment = async (req: Request, res: Response) => {
   try {
     const segmentId = req.params.id;
@@ -87,7 +84,6 @@ export const getCustomersForSegment = async (req: Request, res: Response) => {
   }
 };
 
-// Update segment
 export const updateSegment = async (
   req: AuthenticatedRequest,
   res: Response
@@ -109,7 +105,6 @@ export const updateSegment = async (
   }
 };
 
-// Delete segment
 export const deleteSegment = async (
   req: AuthenticatedRequest,
   res: Response
@@ -124,7 +119,6 @@ export const deleteSegment = async (
   }
 };
 
-// Preview segment audience (without saving)
 export const previewSegment = async (
   req: AuthenticatedRequest,
   res: Response

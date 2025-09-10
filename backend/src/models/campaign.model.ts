@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface ICampaign extends Document {
   title: string;
   segmentId: mongoose.Types.ObjectId | null;
-  status: "pending" | "draft" | "active" | "completed";
+  status: "pending" | "in-progress" | "completed";
   messageTemplate: string;
   customerIds: mongoose.Types.ObjectId[];
   audienceSize: number;
@@ -24,7 +24,7 @@ const campaignSchema = new Schema<ICampaign>(
     },
     status: {
       type: String,
-      enum: ["pending", "draft", "active", "completed"],
+      enum: ["pending", "in-progress", "completed"],
       default: "pending",
     },
     messageTemplate: {
