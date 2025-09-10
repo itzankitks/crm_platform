@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, TrendingUp, Users, Eye, Play } from "lucide-react";
+import { Plus, TrendingUp, Users, Eye, Play, ListOrdered } from "lucide-react";
 import axios from "axios";
 import {
   GET_CAMPAIGN_ENDPOINT,
@@ -44,7 +44,7 @@ const HomePage: React.FC = () => {
 
         // Fetch campaigns
         const { data: campaignResp } = await axios.get(GET_CAMPAIGN_ENDPOINT);
-        setCampaignData(campaignResp.campaigns || []);
+        setCampaignData(campaignResp.campaigns.slice(0, 4) || []);
 
         // Fetch segments (backend returns an array directly)
         const { data: segmentResp } = await axios.get(GET_SEGMENTS_ENDPOINT, {
@@ -52,7 +52,7 @@ const HomePage: React.FC = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        setSegments(segmentResp || []);
+        setSegments(segmentResp.segments.slice(0, 4) || []);
 
         // Fetch customers
         const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT);
@@ -97,25 +97,24 @@ const HomePage: React.FC = () => {
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {/* Campaigns */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
+              onClick={() => navigate("/order")}
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    Total Campaigns
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {campaignData.length}
+                  <p className="text-lg font-bold text-gray-600">
+                    Create Order
                   </p>
                 </div>
                 <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-blue-600" />
+                  <ListOrdered className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
             </div>
 
-            {/* Segments */}
+            {/* Segments
             <div
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
               style={{ animationDelay: "100ms" }}
@@ -133,7 +132,7 @@ const HomePage: React.FC = () => {
                   <Users className="h-6 w-6 text-green-600" />
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Customers */}
             <div
@@ -151,7 +150,7 @@ const HomePage: React.FC = () => {
                   </p>
                 </div>
                 <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-purple-600" />
+                  <Users className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
             </div>
@@ -165,7 +164,7 @@ const HomePage: React.FC = () => {
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">
-                      Campaigns
+                      Recent Campaigns
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
                       Manage your marketing campaigns
@@ -175,8 +174,8 @@ const HomePage: React.FC = () => {
                     onClick={() => navigate("/campaign")}
                     className="group inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                   >
-                    <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-200" />
-                    Create New
+                    <Eye className="h-4 w-4 mr-2 transition-transform duration-200" />
+                    View All
                   </button>
                 </div>
 
@@ -240,7 +239,7 @@ const HomePage: React.FC = () => {
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50 flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">
-                      Segments
+                      Recent Segments
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
                       Target audience segments
@@ -250,8 +249,8 @@ const HomePage: React.FC = () => {
                     onClick={() => navigate("/segment")}
                     className="group inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                   >
-                    <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-200" />
-                    Create New
+                    <Eye className="h-4 w-4 mr-2 transition-transform duration-200" />
+                    View All
                   </button>
                 </div>
 
@@ -268,10 +267,10 @@ const HomePage: React.FC = () => {
                             <h3 className="text-lg font-medium text-gray-900 group-hover:text-green-700 transition-colors">
                               {segment.name}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            {/* <p className="text-sm text-gray-600">
                               {segment.rules.length} rules • Logic:{" "}
                               {segment.logic}
-                            </p>
+                            </p> */}
                           </div>
                           <button
                             onClick={() =>

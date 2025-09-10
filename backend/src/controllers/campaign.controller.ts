@@ -3,8 +3,9 @@ import { Campaign, ICampaign } from "../models/campaign.model";
 import { Segment, ISegment } from "../models/segment.model";
 import { Message, IMessage } from "../models/message.model";
 import mongoose, { Types } from "mongoose";
-import { messageQueue } from "../utils/queues/message.queue";
+import { messageQueue } from "../queues/message.queue";
 import { enqueueCampaignMessages } from "../services/message.service";
+import { redisPublisher } from "../config/redis";
 
 const createNewCampaign = async (req: Request, res: Response) => {
   try {
@@ -20,14 +21,13 @@ const createNewCampaign = async (req: Request, res: Response) => {
       status: "pending",
     });
 
-    await enqueueCampaignMessages(
-      (campaign._id as Types.ObjectId).toString(),
-      customerIds,
-      messageTemplate
+    await redisPublisher.publish(
+      "campaigns:new",
+      JSON.stringify({ _id: campaign._id })
     );
 
     res.status(201).json({
-      message: "Campaign created and messages enqueued",
+      message: "Campaign created and queued for processing",
       campaign,
     });
   } catch (error) {
@@ -38,7 +38,7 @@ const createNewCampaign = async (req: Request, res: Response) => {
 
 const getAllCampaigns = async (req: Request, res: Response) => {
   try {
-    const allCampaigns: ICampaign[] = await Campaign.find({});
+    const allCampaigns: ICampaign[] = await Campaign.find({}).sort({createdAt: -1});
     return res.status(200).json({ campaigns: allCampaigns });
   } catch (error) {
     console.log("Error while fetching Campaigns: ", error);
@@ -51,7 +51,6 @@ const getAllCampaigns = async (req: Request, res: Response) => {
 
 const getCampaignById = async (req: Request, res: Response) => {
   try {
-    console.log("Fetching campaign by ID");
     const campaignId = req.params.id;
 
     const campaign: ICampaign | null = await Campaign.findById(campaignId);

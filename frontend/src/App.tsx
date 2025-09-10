@@ -12,13 +12,15 @@ import Navbar from "./components/Navbar/Navbar";
 import Signup from "./pages/Signup/Signup";
 import { AuthProvider, useAuth } from "./context/authContext";
 import { ToastProvider } from "./context/toastContext";
-import Campaigns from "./pages/Campaigns/Campaigns";
-import Segments from "./pages/Segments/Segments";
+import CampaignsPage from "./pages/Campaigns/CampaignsPage";
 import Customers from "./pages/Customers/Customers";
 import NotFound from "./pages/NotFound/NotFound";
 import Loading from "./components/Loading/Loading";
 import HomePage from "./pages/HomePage/HomePage";
 import CampaignDetail from "./pages/CampaignDetail/CampaignDetail";
+import SegmentsPage from "./pages/Segments/SegmentsPage";
+import Orders from "./pages/Orders/Orders";
+import Campaigns from "./pages/Campaigns/Campaigns";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -111,10 +113,19 @@ function AppContent() {
         />
 
         <Route
+          path="/campaign/create"
+          element={
+            <ProtectedRoute>
+              <CampaignsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/segment"
           element={
             <ProtectedRoute>
-              <Segments />
+              <SegmentsPage />
             </ProtectedRoute>
           }
         />
@@ -124,6 +135,15 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Customers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/order"
+          element={
+            <ProtectedRoute>
+              <Orders />
             </ProtectedRoute>
           }
         />

@@ -2,72 +2,45 @@ import { Request, Response } from "express";
 import { Order, IOrder } from "../models/order.model";
 import { Customer, ICustomer } from "../models/customer.model";
 import mongoose from "mongoose";
-import { redisConnection } from "../config/redis";
+import { redisPublisher } from "../config/redis";
 
 interface OrderData {
-  customerId: mongoose.Types.ObjectId | string;
+  customerId: string;
   cost: number;
 }
 
-const createOrder = async (req: Request, res: Response) => {
+const createOrders = async (req: Request, res: Response) => {
   try {
-    const { customerId, cost }: OrderData = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(customerId)) {
-      return res.status(400).json({ error: "Invalid customer ID format" });
+    const { orders } = req.body;
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({ error: "At least one order required" });
     }
 
-    if (!cost || cost <= 0) {
-      return res
-        .status(400)
-        .json({ error: "Order cost must be greater than 0" });
+    // Validation
+    for (const o of orders) {
+      if (!o.customerId)
+        return res.status(400).json({ error: "Customer ID required" });
+      if (!o.cost || o.cost <= 0)
+        return res.status(400).json({ error: "Cost must be > 0" });
     }
 
-    const customer: ICustomer | null = await Customer.findById(customerId);
+    // Publish to Redis
+    await redisPublisher.publish("orders:new", JSON.stringify(orders));
 
-    if (!customer) {
-      return res
-        .status(400)
-        .json({ error: "Customer does not exist to create order" });
-    }
-
-    const newOrder = await Order.create({
-      cost,
-      customerId,
-      createdAt: new Date(),
+    return res.status(202).json({
+      message: "Orders queued for creation",
+      count: orders.length,
     });
-
-    customer.totalSpending += cost;
-    customer.countVisits += 1;
-    await customer.save();
-
-    await redisConnection.publish(
-      "orders",
-      JSON.stringify({
-        orderId: newOrder._id,
-        customerId: customer._id,
-        cost: cost,
-      })
-    );
-
-    return res.status(201).json({
-      message: "Order created successfully",
-      order: newOrder,
-      updatedCustomer: customer,
-    });
-  } catch (error) {
-    console.log("Error in create Order: ", error);
-    if (error instanceof Error) {
-      return res.status(400).json({ error: error.message });
-    }
-    return res.status(400).json({ error: "An unknown error occurred" });
+  } catch (err) {
+    console.error("Error queuing orders:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 const getAllOrders = async (req: Request, res: Response) => {
   try {
     const orders: IOrder[] = await Order.find({});
-    return res.status(200).json(orders);
+    return res.status(200).json({ orders });
   } catch (error) {
     console.log("Error in get all orders: ", error);
     if (error instanceof Error) {
@@ -161,7 +134,7 @@ const deleteOrderById = async (req: Request, res: Response) => {
 };
 
 export {
-  createOrder,
+  createOrders,
   getAllOrders,
   getOrderById,
   updateOrderById,

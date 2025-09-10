@@ -25,8 +25,6 @@ const customerSchema = new Schema<ICustomer>(
     },
     phone: {
       type: String,
-      unique: true,
-      sparse: true,
       trim: true,
     },
     totalSpending: {

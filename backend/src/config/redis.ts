@@ -1,18 +1,27 @@
-import IORedis from "ioredis";
+import Redis from "ioredis";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-if (!process.env.REDIS_URL) {
-  throw new Error("REDIS_URL must be set in environment variables");
-}
+// Redis connection for publishing and general commands
+export const redisPublisher = new Redis(process.env.REDIS_URL!);
 
-export const redisConnection = new IORedis(process.env.REDIS_URL);
+// Redis connection for subscribing
+export const redisSubscriber = new Redis(process.env.REDIS_URL!);
 
-redisConnection.on("connect", () => {
-  console.log("Connected to Redis");
+// Event handlers
+redisPublisher.on("connect", () => {
+  console.log("Redis publisher connected");
 });
 
-redisConnection.on("error", (err) => {
-  console.error("Redis error:", err);
+redisPublisher.on("error", (err) => {
+  console.error("Redis publisher error:", err);
+});
+
+redisSubscriber.on("connect", () => {
+  console.log("Redis subscriber connected");
+});
+
+redisSubscriber.on("error", (err) => {
+  console.error("Redis subscriber error:", err);
 });

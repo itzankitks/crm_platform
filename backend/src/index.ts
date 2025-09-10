@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
 import routes from "./routes";
+import "./workers/customer.worker";
+import "./workers/order.worker";
 
 dotenv.config();
 

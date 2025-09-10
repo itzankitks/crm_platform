@@ -13,30 +13,32 @@ interface Customer {
   lastActiveAt?: string;
 }
 
+type NewCustomer = Omit<
+  Customer,
+  "_id" | "totalSpending" | "countVisits" | "lastActiveAt"
+>;
+
 const Customers: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
-  const [newCustomer, setNewCustomer] = useState<
-    Omit<Customer, "_id" | "totalSpending" | "countVisits" | "lastActiveAt">
-  >({
-    name: "",
-    email: "",
-    phone: "",
-  });
+  const [newCustomers, setNewCustomers] = useState<NewCustomer[]>([
+    { name: "", email: "", phone: "" },
+  ]);
+
+  const fetchCustomers = async () => {
+    try {
+      const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT);
+      setCustomers(customerResp.customers || []);
+    } catch (err) {
+      setError("Failed to fetch customers.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT);
-        setCustomers(customerResp.customers || []);
-      } catch (err) {
-        setError("Failed to fetch customers.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCustomers();
   }, []);
 
@@ -49,14 +51,45 @@ const Customers: React.FC = () => {
     }
   };
 
+  const handleAddCustomerField = () => {
+    setNewCustomers([...newCustomers, { name: "", email: "", phone: "" }]);
+  };
+
+  const handleRemoveCustomerField = (index: number) => {
+    const updated = [...newCustomers];
+    updated.splice(index, 1);
+    setNewCustomers(updated);
+  };
+
+  const handleChange = (
+    index: number,
+    field: keyof NewCustomer,
+    value: string
+  ) => {
+    const updated = [...newCustomers];
+    updated[index][field] = value;
+    setNewCustomers(updated);
+  };
+
   const handleCreate = async () => {
     try {
-      const { data } = await axios.post(GET_CUSTOMER_ENDPOINT, newCustomer);
-      setCustomers([...customers, data.customer]);
+      console.log("Creating customers:", newCustomers);
+      console.log("POST to:", GET_CUSTOMER_ENDPOINT);
+      const { data } = await axios.post(GET_CUSTOMER_ENDPOINT, {
+        customers: newCustomers,
+      });
+      console.log("Create response:", data);
+
+      alert(`${data.count} customers queued for creation!`);
+
       setShowCreateModal(false);
-      setNewCustomer({ name: "", email: "", phone: "" });
+      setNewCustomers([{ name: "", email: "", phone: "" }]);
+
+      // Optionally refetch the customer list
+      fetchCustomers();
     } catch (err) {
-      setError("Failed to create customer.");
+      console.error("Error creating customers:", err);
+      setError("Failed to create customers.");
     }
   };
 
@@ -77,7 +110,7 @@ const Customers: React.FC = () => {
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105"
             onClick={() => setShowCreateModal(true)}
           >
-            + Create New Customer
+            + Create New Customers
           </button>
         </div>
         <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
@@ -148,54 +181,74 @@ const Customers: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Customer Modal */}
+      {/* Create Customers Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Create New Customer
+              Create New Customers
             </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
-                  value={newCustomer.name}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
-                  value={newCustomer.email}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, email: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Phone
-                </label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
-                  value={newCustomer.phone}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div className="flex justify-end space-x-3">
+            <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
+              {newCustomers.map((cust, index) => (
+                <div key={index} className="p-4 border rounded-lg space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      value={cust.name}
+                      onChange={(e) =>
+                        handleChange(index, "name", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      value={cust.email || ""}
+                      onChange={(e) =>
+                        handleChange(index, "email", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <input
+                      type="text"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      value={cust.phone || ""}
+                      onChange={(e) =>
+                        handleChange(index, "phone", e.target.value)
+                      }
+                    />
+                  </div>
+                  {newCustomers.length > 1 && (
+                    <button
+                      className="text-red-600 text-sm mt-2"
+                      onClick={() => handleRemoveCustomerField(index)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between items-center mt-4">
+              <button
+                className="px-3 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-sm"
+                onClick={handleAddCustomerField}
+              >
+                + Add Another
+              </button>
+              <div className="flex space-x-3">
                 <button
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                   onClick={() => setShowCreateModal(false)}
@@ -206,7 +259,7 @@ const Customers: React.FC = () => {
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   onClick={handleCreate}
                 >
-                  Create
+                  Create All
                 </button>
               </div>
             </div>

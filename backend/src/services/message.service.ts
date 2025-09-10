@@ -1,4 +1,4 @@
-import { messageQueue } from "../utils/queues/message.queue";
+import { messageQueue } from "../queues/message.queue";
 import { Message } from "../models/message.model";
 import { Types } from "mongoose";
 

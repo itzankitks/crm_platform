@@ -2,45 +2,30 @@ import { Request, Response } from "express";
 import { Segment } from "../models/segment.model";
 import { Customer } from "../models/customer.model";
 import { AuthenticatedRequest } from "../utils/auth";
+import { parseExpression } from "../utils/expressionParser";
 
-// Utility: Build MongoDB query from rules
-function buildMongoQuery(rules: any[], logic: "AND" | "OR") {
-  const conditions = rules.map((rule) => {
-    const { field, operator, value } = rule;
-
-    switch (operator) {
-      case ">":
-        return { [field]: { $gt: value } };
-      case "<":
-        return { [field]: { $lt: value } };
-      case ">=":
-        return { [field]: { $gte: value } };
-      case "<=":
-        return { [field]: { $lte: value } };
-      case "=":
-        return { [field]: value };
-      case "!=":
-        return { [field]: { $ne: value } };
-      default:
-        return {};
-    }
-  });
-
-  return logic === "AND" ? { $and: conditions } : { $or: conditions };
-}
-
-export const createSegment = async (req: Request, res: Response) => {
+// Create Segment
+export const createSegment = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const { name, rules, logic, userId } = req.body;
+    const { name, expression } = req.body;
 
-    const mongoQuery = buildMongoQuery(rules, logic);
+    if (!name || !expression) {
+      return res
+        .status(400)
+        .json({ error: "Name and expression are required" });
+    }
+
+    const mongoQuery = parseExpression(expression);
+    console.log("mongoQuery:", mongoQuery);
     const matchingCustomers = await Customer.find(mongoQuery);
 
     const segment = await Segment.create({
       name,
-      rules,
-      logic,
-      userId,
+      expression,
+      userId: req.user?._id,
     });
 
     res.status(201).json({
@@ -54,6 +39,7 @@ export const createSegment = async (req: Request, res: Response) => {
   }
 };
 
+// Get all segments for logged-in user
 export const getAllSegments = async (
   req: AuthenticatedRequest,
   res: Response
@@ -68,6 +54,7 @@ export const getAllSegments = async (
   }
 };
 
+// Get segment by ID
 export const getSegmentById = async (
   req: AuthenticatedRequest,
   res: Response
@@ -82,16 +69,36 @@ export const getSegmentById = async (
   }
 };
 
+// GET /segments/:id/customers
+export const getCustomersForSegment = async (req: Request, res: Response) => {
+  try {
+    const segmentId = req.params.id;
+    console.log("Fetching customers for segment ID:", segmentId);
+    const segment = await Segment.findById(segmentId);
+    if (!segment) return res.status(404).json({ error: "Segment not found" });
+
+    const mongoQuery = parseExpression(segment.expression);
+    console.log("Mongo Query for segment customers:", mongoQuery);
+    const customers = await Customer.find(mongoQuery);
+
+    res.json({ customers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch customers" });
+  }
+};
+
+// Update segment
 export const updateSegment = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { name, rules, logic } = req.body;
+    const { name, expression } = req.body;
 
     const updated = await Segment.findByIdAndUpdate(
       req.params.id,
-      { name, rules, logic },
+      { name, expression },
       { new: true }
     );
 
@@ -103,6 +110,7 @@ export const updateSegment = async (
   }
 };
 
+// Delete segment
 export const deleteSegment = async (
   req: AuthenticatedRequest,
   res: Response
@@ -117,14 +125,18 @@ export const deleteSegment = async (
   }
 };
 
+// Preview segment audience (without saving)
 export const previewSegment = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { rules, logic } = req.body;
+    const { expression } = req.body;
+    if (!expression) {
+      return res.status(400).json({ error: "Expression is required" });
+    }
 
-    const mongoQuery = buildMongoQuery(rules, logic);
+    const mongoQuery = parseExpression(expression);
     const customers = await Customer.find(mongoQuery);
 
     res.json({

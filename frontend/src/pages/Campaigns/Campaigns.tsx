@@ -1,299 +1,136 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Eye, TrendingUp } from "lucide-react";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Plus, Loader2 } from "lucide-react";
-import {
-  GET_SEGMENTS_ENDPOINT,
-  CREATE_CAMPAIGN_ENDPOINT,
-} from "../../utils/endPoints";
+import { GET_CAMPAIGN_ENDPOINT } from "../../utils/endPoints";
+import Loading from "../../components/Loading/Loading";
 
-interface Segment {
+interface Campaign {
   _id: string;
-  name: string;
-  customerSize?: number;
+  title: string;
+  status?: string;
+  messageTemplate?: string;
+  createdAt?: string;
+  audienceSize?: number;
 }
 
 const Campaigns: React.FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const preselectedSegmentId = (location.state as any)?.segmentId || "";
-
-  const [segments, setSegments] = useState<Segment[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [title, setTitle] = useState("");
-  const [segmentId, setSegmentId] = useState(preselectedSegmentId);
-  const [messageTemplate, setMessageTemplate] = useState("");
-
-  // Fetch segments
-  const fetchSegments = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(GET_SEGMENTS_ENDPOINT, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setSegments(res.data.segments || []);
-    } catch (err) {
-      console.error("Error fetching segments:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    fetchSegments();
+    const fetchCampaigns = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(GET_CAMPAIGN_ENDPOINT, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setCampaigns(data.campaigns || []);
+      } catch (err) {
+        console.error("Error fetching campaigns:", err);
+        setError("Failed to fetch campaigns");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCampaigns();
   }, []);
 
-  const createCampaign = async () => {
-    if (!title.trim() || !segmentId || !messageTemplate.trim()) return;
-
-    try {
-      const res = await axios.post(CREATE_CAMPAIGN_ENDPOINT, {
-        title,
-        segmentId,
-        messageTemplate,
-      });
-      console.log("Campaign created:", res.data);
-      // Redirect to campaign list/dashboard
-      navigate("/");
-    } catch (err) {
-      console.error("Error creating campaign:", err);
+  const getStatusColor = (status: string = "") => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "draft":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "completed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-      </div>
-    );
-  }
+  if (loading) return <Loading />;
+  if (error)
+    return <div className="text-red-500 text-center py-8">{error}</div>;
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Create Campaign</h1>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Campaign Title
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-            placeholder="Enter campaign title"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Select Segment
-          </label>
-          <select
-            value={segmentId}
-            onChange={(e) => setSegmentId(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Campaigns</h1>
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105"
+            onClick={() => navigate("/campaign/create")}
           >
-            <option value="">-- Select Segment --</option>
-            {segments.map((seg) => (
-              <option key={seg._id} value={seg._id}>
-                {seg.name} ({seg.customerSize || 0} users)
-              </option>
-            ))}
-          </select>
+            + Create New Campaign
+          </button>
         </div>
 
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Message Template
-          </label>
-          <textarea
-            value={messageTemplate}
-            onChange={(e) => setMessageTemplate(e.target.value)}
-            className="border rounded px-3 py-2 w-full"
-            rows={4}
-            placeholder="Hi {name}, here’s a special offer for you!"
-          ></textarea>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="divide-y divide-gray-200">
+            {campaigns.length > 0 ? (
+              campaigns.map((campaign, index) => (
+                <div
+                  key={campaign._id}
+                  className="p-6 hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 animate-fade-in group cursor-pointer"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-700 transition-colors">
+                          {campaign.title}
+                        </h3>
+                        {campaign.status && (
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                              campaign.status
+                            )}`}
+                          >
+                            {campaign.status}
+                          </span>
+                        )}
+                      </div>
+                      {campaign.audienceSize && (
+                        <p className="text-sm text-gray-500">
+                          Audience: {campaign.audienceSize} customers
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/campaign/${campaign._id}`);
+                      }}
+                      className="inline-flex items-center px-3 py-2 text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View Stats
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-12 text-center">
+                <div className="animate-bounce">
+                  <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                </div>
+                <p className="text-gray-500 font-medium">No campaigns yet</p>
+                <p className="text-gray-400 text-sm">
+                  Create your first campaign to get started
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-
-        <button
-          onClick={createCampaign}
-          className="bg-blue-600 text-white px-4 py-2 rounded flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create Campaign</span>
-        </button>
       </div>
     </div>
   );
 };
 
 export default Campaigns;
-
-// import React, { useEffect, useState } from "react";
-// import { useLocation, useNavigate } from "react-router-dom";
-// import axios from "axios";
-// import {
-//   CREATE_CAMPAIGN_ENDPOINT,
-//   GET_SEGMENTS_ENDPOINT,
-// } from "../../utils/endPoints";
-// import Dropdown from "../../components/Dropdown/Dropdown";
-
-// interface Segment {
-//   _id: string;
-//   name: string;
-// }
-
-// interface LocationState {
-//   id?: string;
-// }
-
-// const Campaigns: React.FC = () => {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-//   const state = location.state as LocationState;
-//   const id = state?.id;
-//   console.log("segment id: ", id);
-
-//   const [segments, setSegments] = useState<Segment[]>([]);
-//   const [selectedSegment, setSelectedSegment] = useState<string>(
-//     id || "Past Segments"
-//   );
-//   const [campaignTitle, setCampaignTitle] = useState<string>("");
-//   const [messageTemplate, setMessageTemplate] = useState<string>("");
-//   const [loading, setLoading] = useState<boolean>(true);
-
-//   useEffect(() => {
-//     const fetchAllSegments = async () => {
-//       try {
-//         const token = localStorage.getItem("token");
-//         const response = await axios.get(GET_SEGMENTS_ENDPOINT, {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-//         const fetchedSegments = Array.isArray(response.data?.segments)
-//           ? response.data.segments
-//           : [];
-//         setSegments(fetchedSegments);
-//         console.log("Segments from fetch: ", fetchedSegments);
-//       } catch (error) {
-//         console.error("Error fetching segments: ", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchAllSegments();
-//   }, []);
-
-//   const selectSegmentHandle = (option: string) => {
-//     setSelectedSegment(option);
-//   };
-
-//   const handleCampaignSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     console.log("Submit triggered");
-//     if (
-//       selectedSegment === "Past Segments" ||
-//       campaignTitle === "" ||
-//       messageTemplate === ""
-//     ) {
-//       alert(
-//         "One or more fields are missing. Please submit a valid campaign value"
-//       );
-//       return;
-//     }
-//     try {
-//       const selectedSegmentObject = id
-//         ? segments.find((segment) => segment._id === selectedSegment)
-//         : segments.find((segment) => segment.name === selectedSegment);
-
-//       console.log("segment id: ", selectedSegmentObject?._id);
-//       if (!selectedSegmentObject) {
-//         alert("Selected segment not found");
-//         return;
-//       }
-//       const campaignData = await axios.post(CREATE_CAMPAIGN_ENDPOINT, {
-//         title: campaignTitle,
-//         segmentId: selectedSegmentObject._id,
-//         messageTemplate: messageTemplate,
-//       });
-//       console.log("Campaign Data: ", campaignData);
-//       if (campaignData.status >= 200 && campaignData.status < 300) {
-//         alert("Campaign has been successfully created!");
-//         navigate(`/campaign/${campaignData.data.Campaign._id}`);
-//       } else {
-//         alert("Campaign unsuccessful");
-//       }
-//     } catch (error) {
-//       console.error("Error in creating new campaign: ", error);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-white flex flex-col items-center pt-16">
-//       <div className="w-1/2 p-8 bg-white text-cyan-500 border-2 border-cyan-500 rounded-3xl mt-16">
-//         <h3 className="text-xl font-bold mb-4">Start a new Campaign</h3>
-//         <form
-//           onSubmit={handleCampaignSubmit}
-//           className="flex flex-col items-center"
-//         >
-//           <div className="w-full flex flex-row items-center mb-4">
-//             <p className="mr-16 text-lg font-bold">Segment - </p>
-//             {id ? (
-//               <p>{selectedSegment}</p>
-//             ) : loading ? (
-//               <p>Loading segments...</p>
-//             ) : (
-//               <Dropdown
-//                 label={selectedSegment}
-//                 options={
-//                   Array.isArray(segments)
-//                     ? segments.map((data) => data.name)
-//                     : []
-//                 }
-//                 onSelect={selectSegmentHandle}
-//                 type="button"
-//               />
-//             )}
-//           </div>
-//           <div className="w-full flex flex-row items-center mb-4">
-//             <p className="mr-16 text-lg font-bold">Campaign Title - </p>
-//             <input
-//               className="w-4/5 h-12 px-4 border-2 border-cyan-500 rounded-lg"
-//               placeholder="Enter your Campaign Title"
-//               value={campaignTitle}
-//               onChange={(e) => setCampaignTitle(e.target.value)}
-//             />
-//           </div>
-//           <div className="w-full mb-4">
-//             <h3 className="text-lg font-bold">Message Template - </h3>
-//             <p>
-//               <span className="font-bold">NOTE: </span>For personalized texts
-//               please write <span className="font-bold">&#123;name&#125;</span>{" "}
-//               in the template
-//             </p>
-//             <textarea
-//               className="w-[95%] min-w-[3rem] p-4 resize-y border-2 border-cyan-500 rounded-xl"
-//               placeholder="Enter your Message Template"
-//               value={messageTemplate}
-//               onChange={(e) => setMessageTemplate(e.target.value)}
-//             />
-//           </div>
-//           <div className="mt-8">
-//             <button
-//               type="submit"
-//               className="w-32 p-4 text-sm font-semibold text-white bg-cyan-500 rounded-lg cursor-pointer"
-//             >
-//               Save
-//             </button>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Campaigns;

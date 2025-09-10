@@ -7,6 +7,7 @@ import {
   updateSegment,
   deleteSegment,
   previewSegment,
+  getCustomersForSegment,
 } from "../controllers/segment.controller";
 
 const router = Router();
@@ -15,6 +16,7 @@ router.post("/", authenticateJwt, createSegment);
 router.post("/preview", authenticateJwt, previewSegment);
 router.get("/", authenticateJwt, getAllSegments);
 router.get("/:id", authenticateJwt, getSegmentById);
+router.get("/:id/customers", authenticateJwt, getCustomersForSegment);
 router.put("/:id", authenticateJwt, updateSegment);
 router.delete("/:id", authenticateJwt, deleteSegment);
 
