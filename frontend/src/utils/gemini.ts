@@ -68,37 +68,70 @@ export const convertNaturalLanguageToSegmentRules = async (
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
+    // Calculate date offsets for common relative time expressions
+    const now = new Date();
+    const dateExamples = {
+      "3 weeks ago": new Date(now.setDate(now.getDate() - 21))
+        .toISOString()
+        .split("T")[0],
+      "1 month ago": new Date(now.setDate(now.getDate() - 30))
+        .toISOString()
+        .split("T")[0],
+      "6 months ago": new Date(now.setMonth(now.getMonth() - 6))
+        .toISOString()
+        .split("T")[0],
+      "1 year ago": new Date(now.setFullYear(now.getFullYear() - 1))
+        .toISOString()
+        .split("T")[0],
+    };
+
     const prompt = `
       Convert this natural language description to segment rules for an e-commerce platform:
 
       "${naturalLanguage}"
 
       Available fields:
-      - totalSpending: customer's total spending amount (use INR currency symbol)
-      - countVisits: number of visits
-      - lastActiveAt: date of last activity (use relative time like "6 months ago")
+      - totalSpending: customer's total spending amount (use numbers only, no currency symbols)
+      - countVisits: number of visits (use numbers only)
+      - lastActiveAt: date of last activity (use YYYY-MM-DD format)
 
       Available operators: >, <, >=, <=, =, !=
 
-      Return ONLY a JSON array of objects with this structure:
-      {
-        field: "fieldName",
-        operator: "operator",
-        value: "value",
-        connector?: "AND"|"OR"
-      }
+      Important requirements:
+      1. For time expressions like "3 weeks ago", convert to actual dates using today's date (${
+        new Date().toISOString().split("T")[0]
+      }) as reference
+      2. Always include connectors (AND/OR) between rules
+      3. Return ONLY a JSON array with proper connectors between rules
 
-      Examples:
-      "People who spent more than ₹5000 and visited at least 3 times" would return:
+      Example conversions:
+      - "3 weeks ago" → "${dateExamples["3 weeks ago"]}"
+      - "1 month ago" → "${dateExamples["1 month ago"]}"
+      - "6 months ago" → "${dateExamples["6 months ago"]}"
+
+      Return ONLY a JSON array of objects with this structure:
       [
-        { "field": "totalSpending", "operator": ">", "value": "5000" },
-        { "field": "countVisits", "operator": ">=", "value": "3", "connector": "AND" }
+        {
+          field: "fieldName",
+          operator: "operator",
+          value: "value",
+          connector?: "AND"|"OR"
+        }
       ]
 
-      "Customers inactive for 6 months or spent less than ₹1000" would return:
+      Example response for "People who spent more than 2000 but haven't visited in last 3 weeks":
       [
-        { "field": "lastActiveAt", "operator": "<", "value": "6 months ago", "connector": "OR" },
-        { "field": "totalSpending", "operator": "<", "value": "1000" }
+        {
+          "field": "totalSpending",
+          "operator": ">",
+          "value": "2000",
+          "connector": "AND"
+        },
+        {
+          "field": "lastActiveAt",
+          "operator": "<",
+          "value": "${dateExamples["3 weeks ago"]}"
+        }
       ]
     `;
 
@@ -106,12 +139,43 @@ export const convertNaturalLanguageToSegmentRules = async (
     const response = await result.response;
     const text = response.text();
 
+    // Try to parse the JSON response
     try {
+      // Clean up the response text
       const jsonText = text.replace(/```json|```/g, "").trim();
       const parsedRules = JSON.parse(jsonText);
 
       if (Array.isArray(parsedRules)) {
-        return parsedRules;
+        // Post-process to convert relative dates to actual dates
+        const processedRules = parsedRules.map((rule) => {
+          if (rule.field === "lastActiveAt") {
+            // Check if value is a relative time expression
+            const relativeTimeMatch = rule.value.match(
+              /(\d+)\s*(week|month|year)s?\s*ago/i
+            );
+            if (relativeTimeMatch) {
+              const amount = parseInt(relativeTimeMatch[1]);
+              const unit = relativeTimeMatch[2];
+
+              const date = new Date();
+              if (unit === "week") {
+                date.setDate(date.getDate() - amount * 7);
+              } else if (unit === "month") {
+                date.setMonth(date.getMonth() - amount);
+              } else if (unit === "year") {
+                date.setFullYear(date.getFullYear() - amount);
+              }
+
+              return {
+                ...rule,
+                value: date.toISOString().split("T")[0],
+              };
+            }
+          }
+          return rule;
+        });
+
+        return processedRules;
       }
     } catch (e) {
       console.error("Error parsing AI response:", e);
