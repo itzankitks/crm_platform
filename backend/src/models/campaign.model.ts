@@ -5,8 +5,8 @@ export interface ICampaign extends Document {
   segmentId: mongoose.Types.ObjectId | null;
   status: "pending" | "draft" | "active" | "completed";
   messageTemplate: string;
-  customerIds: mongoose.Types.ObjectId[]; // locked-in audience
-  audienceSize: number; // convenience for history/stats
+  customerIds: mongoose.Types.ObjectId[];
+  audienceSize: number;
   intent?: string;
 }
 

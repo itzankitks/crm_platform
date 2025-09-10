@@ -2,10 +2,6 @@ import { Request, Response } from "express";
 import { Message } from "../models/message.model";
 import { redisPublisher } from "../config/redis";
 
-/**
- * Simulated Delivery Receipt API
- * Vendor will POST { vendorMessageId, status }
- */
 export const deliveryReceipt = async (req: Request, res: Response) => {
   try {
     const { vendorMessageId, status } = req.body;
@@ -15,11 +11,6 @@ export const deliveryReceipt = async (req: Request, res: Response) => {
         .status(400)
         .json({ error: "vendorMessageId and status required" });
     }
-
-    // await redis.rpush(
-    //   "delivery_receipts",
-    //   JSON.stringify({ vendorMessageId, status, receivedAt: new Date() })
-    // );
 
     const message = await Message.findOne({ vendorMessageId });
     if (!message) {

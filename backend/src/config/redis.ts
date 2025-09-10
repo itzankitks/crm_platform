@@ -3,13 +3,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Redis connection for publishing and general commands
 export const redisPublisher = new Redis(process.env.REDIS_URL!);
 
-// Redis connection for subscribing
 export const redisSubscriber = new Redis(process.env.REDIS_URL!);
 
-// Event handlers
 redisPublisher.on("connect", () => {
   console.log("Redis publisher connected");
 });

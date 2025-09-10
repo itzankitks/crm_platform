@@ -4,7 +4,6 @@ import { Customer } from "../models/customer.model";
 import { AuthenticatedRequest } from "../utils/auth";
 import { parseExpression } from "../utils/expressionParser";
 
-// Create Segment
 export const createSegment = async (
   req: AuthenticatedRequest,
   res: Response
