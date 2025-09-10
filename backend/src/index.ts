@@ -14,7 +14,13 @@ console.log("PORT:", process.env.PORT);
 
 connectDB();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 app.get("/", (req: Request, res: Response) => {

@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000/api";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const LOGIN_ENDPOINT = BASE_URL + "/auth/login";
 const SIGNUP_ENDPOINT = BASE_URL + "/auth/register";

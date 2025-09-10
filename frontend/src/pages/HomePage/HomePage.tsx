@@ -274,7 +274,7 @@ const HomePage: React.FC = () => {
                           </div>
                           <button
                             onClick={() =>
-                              navigate("/campaign", {
+                              navigate("/campaign/create", {
                                 state: { id: segment._id },
                               })
                             }
