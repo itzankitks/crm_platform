@@ -20,6 +20,8 @@
  *     responses:
  *       201:
  *         description: Campaign created
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -40,6 +42,8 @@
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Campaign'
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -60,6 +64,8 @@
  *         description: Campaign found
  *       404:
  *         description: Campaign not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -80,6 +86,8 @@
  *         description: Campaign stats
  *       404:
  *         description: Campaign not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -106,6 +114,8 @@
  *         description: Campaign updated
  *       404:
  *         description: Campaign not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -126,6 +136,8 @@
  *         description: Campaign deleted
  *       404:
  *         description: Campaign not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -164,14 +176,15 @@ import {
   updateCampaignById,
   deleteCampaignById,
 } from "../controllers/campaign.controller";
+import { authenticateJwt } from "../utils/auth";
 
 const router = Router();
 
-router.post("/", createNewCampaign);
-router.get("/", getAllCampaigns);
-router.get("/:id", getCampaignById);
-router.get("/:id/stats", getCampaignStats);
-router.put("/:id", updateCampaignById);
-router.delete("/:id", deleteCampaignById);
+router.post("/", authenticateJwt, createNewCampaign);
+router.get("/", authenticateJwt, getAllCampaigns);
+router.get("/:id", authenticateJwt, getCampaignById);
+router.get("/:id/stats", authenticateJwt, getCampaignStats);
+router.put("/:id", authenticateJwt, updateCampaignById);
+router.delete("/:id", authenticateJwt, deleteCampaignById);
 
 export default router;

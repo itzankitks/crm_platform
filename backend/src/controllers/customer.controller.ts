@@ -42,19 +42,17 @@ const createBulkCustomers = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No CSV file uploaded" });
     }
 
-    // Read and parse the CSV file
     const csvData = fs.readFileSync(req.file.path, "utf8");
     const records: { name: string; email: string; phone: string }[] = parse(
       csvData,
       {
-        columns: ["name", "email", "phone"], // Explicitly define columns
+        columns: ["name", "email", "phone"],
         skip_empty_lines: true,
         trim: true,
-        from_line: 2, // Skip header row if it exists
+        from_line: 2,
       }
     ) as { name: string; email: string; phone: string }[];
 
-    // Validate CSV format
     if (!records || records.length === 0) {
       fs.unlinkSync(req.file.path);
       return res
@@ -62,16 +60,13 @@ const createBulkCustomers = async (req: Request, res: Response) => {
         .json({ error: "CSV file is empty or invalid format" });
     }
 
-    // Process records to create customers
     const customers = [];
 
     for (const record of records) {
-      // Validate each row
       if (!record.name || !record.email || !record.phone) {
         throw new Error(`Missing required fields in row`);
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(record.email)) {
         throw new Error(`Invalid email format: ${record.email}`);
@@ -84,10 +79,8 @@ const createBulkCustomers = async (req: Request, res: Response) => {
       });
     }
 
-    // Clean up the uploaded file
     fs.unlinkSync(req.file.path);
 
-    // Publish to Redis
     await redisPublisher.publish("customers:new", JSON.stringify(customers));
 
     return res.status(202).json({
@@ -97,7 +90,6 @@ const createBulkCustomers = async (req: Request, res: Response) => {
   } catch (err) {
     console.error("Error processing CSV:", err);
 
-    // Clean up the uploaded file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
@@ -111,8 +103,16 @@ const createBulkCustomers = async (req: Request, res: Response) => {
 
 const getAllCustomers = async (req: Request, res: Response) => {
   try {
+    const cacheKey = "all_customers";
+    const cached = await redisPublisher.get(cacheKey);
+    if (cached) {
+      return res
+        .status(200)
+        .json({ customers: JSON.parse(cached), cached: true });
+    }
     const customers: ICustomer[] = await Customer.find({});
-    return res.status(200).json({ customers });
+    await redisPublisher.set(cacheKey, JSON.stringify(customers), "EX", 120);
+    return res.status(200).json({ customers, cached: false });
   } catch (error) {
     console.log("Error in get all customers: ", error);
     if (error instanceof Error) {

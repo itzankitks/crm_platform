@@ -180,7 +180,6 @@ const CampaignPage: React.FC = () => {
           />
         </div>
 
-        {/* Segment Selection */}
         <div className="mb-4">
           <label className="block text-gray-700 mb-1">Select Segment</label>
           <div className="flex space-x-2">
@@ -249,7 +248,6 @@ const CampaignPage: React.FC = () => {
           {creating ? "Creating..." : "Create Campaign"}
         </button>
 
-        {/* AI Template Modal */}
         {showTemplateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl relative">

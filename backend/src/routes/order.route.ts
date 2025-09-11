@@ -9,6 +9,7 @@ import {
 } from "../controllers/order.controller";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
+import { authenticateJwt } from "../utils/auth";
 
 const router: Router = express.Router();
 /**
@@ -36,6 +37,8 @@ const router: Router = express.Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Order'
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -58,6 +61,8 @@ const router: Router = express.Router();
  *     responses:
  *       201:
  *         description: Orders created
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -78,6 +83,8 @@ const router: Router = express.Router();
  *         description: Order found
  *       404:
  *         description: Order not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -103,11 +110,11 @@ const router: Router = express.Router();
 
 const upload = multer({ dest: "uploads/" });
 
-router.post("/", createOrders);
-router.post("/bulk", upload.single("csv"), createBulkOrders);
-router.get("/", getAllOrders);
-router.get("/:id", getOrderById);
-router.put("/:id", updateOrderById);
-router.delete("/:id", deleteOrderById);
+router.post("/", authenticateJwt, createOrders);
+router.post("/bulk", authenticateJwt, upload.single("csv"), createBulkOrders);
+router.get("/", authenticateJwt, getAllOrders);
+router.get("/:id", authenticateJwt, getOrderById);
+router.put("/:id", authenticateJwt, updateOrderById);
+router.delete("/:id", authenticateJwt, deleteOrderById);
 
 export default router;

@@ -67,7 +67,6 @@ const CustomerSelector: React.FC<Props> = ({
     <div className="flex gap-6 mt-6">
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex gap-6 w-full">
-          {/* Available Customers */}
           <Droppable droppableId="available">
             {(provided: any) => (
               <div
@@ -102,7 +101,6 @@ const CustomerSelector: React.FC<Props> = ({
             )}
           </Droppable>
 
-          {/* Selected Customers */}
           <Droppable droppableId="selected">
             {(provided: any) => (
               <div

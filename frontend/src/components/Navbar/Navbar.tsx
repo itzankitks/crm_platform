@@ -11,12 +11,8 @@ import {
   Home,
   Users,
   ShoppingCart,
-  BarChart2,
   MessageSquare,
   Bell,
-  Ruler,
-  RussianRuble,
-  ArrowBigDown,
   Target,
 } from "lucide-react";
 import { useAuth } from "../../context/authContext";
@@ -35,7 +31,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
   const profileRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -49,7 +44,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -84,7 +78,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
       .slice(0, 2);
   };
 
-  // Navigation items
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: Home },
     { name: "Customers", path: "/customers", icon: Users },
@@ -103,7 +96,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo and desktop navigation */}
           <div className="flex items-center space-x-6">
             <div
               className="flex items-center space-x-3 cursor-pointer"
@@ -138,7 +130,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
             </div>
           </div>
 
-          {/* Right side buttons and profile - desktop */}
           <div className="hidden md:flex items-center space-x-4">
             <button className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200">
               <Bell className="h-5 w-5" />
@@ -219,7 +210,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
             </div>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -235,7 +225,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
         </div>
       </div>
 
-      {/* Mobile menu - appears below navbar */}
       {isMobileMenuOpen && (
         <div
           ref={mobileMenuRef}

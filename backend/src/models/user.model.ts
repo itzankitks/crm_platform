@@ -1,5 +1,22 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *    User:
+ *     type: object
+ *     properties:
+ *      _id:
+ *       type: string
+ *      name:
+ *       type: string
+ *      email:
+ *       type: string
+ *      password:
+ *       type: string
+ */
+
 export interface IUser extends Document {
   name: string;
   email: string;

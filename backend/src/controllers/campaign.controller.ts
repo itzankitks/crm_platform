@@ -42,10 +42,21 @@ const createNewCampaign = async (req: Request, res: Response) => {
 
 const getAllCampaigns = async (req: Request, res: Response) => {
   try {
+    const cacheKey = "all_campaigns";
+    const cached = await redisPublisher.get(cacheKey);
+    if (cached) {
+      return res
+        .status(200)
+        .json({ campaigns: JSON.parse(cached), cached: true });
+    }
+
     const allCampaigns: ICampaign[] = await Campaign.find({}).sort({
       createdAt: -1,
     });
-    return res.status(200).json({ campaigns: allCampaigns });
+
+    await redisPublisher.set(cacheKey, JSON.stringify(allCampaigns), "EX", 120);
+
+    return res.status(200).json({ campaigns: allCampaigns, cached: false });
   } catch (error) {
     console.log("Error while fetching Campaigns: ", error);
     if (error instanceof Error) {

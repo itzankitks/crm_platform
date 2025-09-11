@@ -91,7 +91,6 @@
  *         description: User signed up with Google
  */
 
-// Existing routes
 import { Router } from "express";
 import {
   googleLogin,

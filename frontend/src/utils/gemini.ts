@@ -68,7 +68,6 @@ export const convertNaturalLanguageToSegmentRules = async (
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    // Calculate date offsets for common relative time expressions
     const now = new Date();
     const dateExamples = {
       "3 weeks ago": new Date(now.setDate(now.getDate() - 21))
@@ -139,17 +138,13 @@ export const convertNaturalLanguageToSegmentRules = async (
     const response = await result.response;
     const text = response.text();
 
-    // Try to parse the JSON response
     try {
-      // Clean up the response text
       const jsonText = text.replace(/```json|```/g, "").trim();
       const parsedRules = JSON.parse(jsonText);
 
       if (Array.isArray(parsedRules)) {
-        // Post-process to convert relative dates to actual dates
         const processedRules = parsedRules.map((rule) => {
           if (rule.field === "lastActiveAt") {
-            // Check if value is a relative time expression
             const relativeTimeMatch = rule.value.match(
               /(\d+)\s*(week|month|year)s?\s*ago/i
             );

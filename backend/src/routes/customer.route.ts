@@ -25,6 +25,8 @@
  *     responses:
  *       201:
  *         description: Customers created
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -45,6 +47,8 @@
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Customer'
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -65,6 +69,8 @@
  *         description: Customer found
  *       404:
  *         description: Customer not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -91,6 +97,8 @@
  *         description: Customer updated
  *       404:
  *         description: Customer not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -111,6 +119,8 @@
  *         description: Customer deleted
  *       404:
  *         description: Customer not found
+ *     security:
+ *       - bearerAuth: []
  */
 
 /**
@@ -147,16 +157,22 @@ import {
 } from "../controllers/customer.controller";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
+import { authenticateJwt } from "../utils/auth";
 
 const upload = multer({ dest: "uploads/" });
 
 const router = Router();
 
-router.post("/", createCustomers);
-router.post("/bulk", upload.single("csv"), createBulkCustomers);
-router.get("/", getAllCustomers);
-router.get("/:id", getCustomerById);
-router.put("/:id", updateCustomerById);
-router.delete("/:id", deleteCustomerById);
+router.post("/", authenticateJwt, createCustomers);
+router.post(
+  "/bulk",
+  authenticateJwt,
+  upload.single("csv"),
+  createBulkCustomers
+);
+router.get("/", authenticateJwt, getAllCustomers);
+router.get("/:id", authenticateJwt, getCustomerById);
+router.put("/:id", authenticateJwt, updateCustomerById);
+router.delete("/:id", authenticateJwt, deleteCustomerById);
 
 export default router;

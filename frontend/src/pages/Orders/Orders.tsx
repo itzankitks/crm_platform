@@ -44,7 +44,11 @@ const Orders: React.FC = () => {
 
   const fetchCustomers = useCallback(async () => {
     try {
-      const { data } = await axios.get(GET_CUSTOMER_ENDPOINT);
+      const { data } = await axios.get(GET_CUSTOMER_ENDPOINT, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setCustomers(data.customers || []);
     } catch (err) {
       setError("Failed to fetch customers.");
@@ -53,7 +57,11 @@ const Orders: React.FC = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const { data } = await axios.get(GET_ORDER_ENDPOINT);
+      const { data } = await axios.get(GET_ORDER_ENDPOINT, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setOrders(data.orders || []);
     } catch (err) {
       setError("Failed to fetch orders.");
@@ -102,9 +110,17 @@ const Orders: React.FC = () => {
           return showToast("Cost must be greater than 0", "error");
       }
 
-      const { data } = await axios.post(GET_ORDER_ENDPOINT, {
-        orders: newOrders,
-      });
+      const { data } = await axios.post(
+        GET_ORDER_ENDPOINT,
+        {
+          orders: newOrders,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       showToast(`${newOrders.length} orders queued for creation!`, "success");
 
@@ -121,7 +137,11 @@ const Orders: React.FC = () => {
 
       const pollForUpdates = async () => {
         try {
-          const { data: updatedData } = await axios.get(GET_ORDER_ENDPOINT);
+          const { data: updatedData } = await axios.get(GET_ORDER_ENDPOINT, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
           setOrders(updatedData.orders || []);
 
           clearInterval(pollInterval);
@@ -146,14 +166,12 @@ const Orders: React.FC = () => {
       const file = e.target.files[0];
       setCsvFile(file);
 
-      // Parse CSV file
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
           const lines = content.split("\n");
 
-          // Skip header row if it exists
           const dataLines = lines[0].toLowerCase().includes("customerid")
             ? lines.slice(1)
             : lines;
@@ -187,7 +205,6 @@ const Orders: React.FC = () => {
 
     setUploading(true);
     try {
-      // Prepare data for upload
       const formData = new FormData();
       formData.append("csv", csvFile);
 
@@ -207,7 +224,6 @@ const Orders: React.FC = () => {
         "success"
       );
 
-      // Add temporary orders to UI
       const newOrdersWithIds = csvPreview.map((order) => ({
         ...order,
         _id: `temp-${Math.random().toString(36).substr(2, 9)}`,
@@ -217,15 +233,17 @@ const Orders: React.FC = () => {
 
       setOrders((prevOrders) => [...newOrdersWithIds, ...prevOrders]);
 
-      // Reset CSV upload state
       setShowCSVUploadModal(false);
       setCsvFile(null);
       setCsvPreview([]);
 
-      // Start polling for updates
       const pollForUpdates = async () => {
         try {
-          const { data: updatedData } = await axios.get(GET_ORDER_ENDPOINT);
+          const { data: updatedData } = await axios.get(GET_ORDER_ENDPOINT, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
           setOrders(updatedData.orders || []);
           clearInterval(pollInterval);
         } catch (err) {
@@ -282,7 +300,6 @@ const Orders: React.FC = () => {
           </div>
         </div>
 
-        {/* Refresh button */}
         <div className="mb-4">
           <button
             onClick={fetchOrders}
@@ -292,7 +309,6 @@ const Orders: React.FC = () => {
           </button>
         </div>
 
-        {/* Orders Table */}
         <div className="bg-white rounded-lg shadow overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -361,7 +377,6 @@ const Orders: React.FC = () => {
           )}
         </div>
 
-        {/* Orders Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">

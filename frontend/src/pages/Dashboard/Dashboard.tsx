@@ -42,7 +42,11 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true);
 
-        const { data: campaignResp } = await axios.get(GET_CAMPAIGN_ENDPOINT);
+        const { data: campaignResp } = await axios.get(GET_CAMPAIGN_ENDPOINT, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         setCampaignData(campaignResp.campaigns.slice(0, 4) || []);
 
         const { data: segmentResp } = await axios.get(GET_SEGMENTS_ENDPOINT, {
@@ -52,7 +56,11 @@ const Dashboard: React.FC = () => {
         });
         setSegments(segmentResp.segments.slice(0, 4) || []);
 
-        const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT);
+        const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         setCustomers(customerResp.customers || []);
       } catch (error) {
         console.log("Error in fetching Data, ", error);
@@ -93,7 +101,6 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Summary cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
@@ -111,8 +118,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Segments
-            <div
+            {/* <div
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
               style={{ animationDelay: "100ms" }}
             >
@@ -131,7 +137,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div> */}
 
-            {/* Customers */}
             <div
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
               style={{ animationDelay: "200ms" }}
@@ -153,9 +158,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Campaigns + Segments */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {/* Campaigns List */}
             <div className="space-y-6 animate-slide-left">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
@@ -230,7 +233,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Segments List */}
             <div className="space-y-6 animate-slide-right">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50 flex items-center justify-between">
@@ -264,10 +266,6 @@ const Dashboard: React.FC = () => {
                             <h3 className="text-lg font-medium text-gray-900 group-hover:text-green-700 transition-colors">
                               {segment.name}
                             </h3>
-                            {/* <p className="text-sm text-gray-600">
-                              {segment.rules.length} rules • Logic:{" "}
-                              {segment.logic}
-                            </p> */}
                           </div>
                           <button
                             onClick={() =>

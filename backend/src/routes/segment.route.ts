@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /segments:
+ * /segment:
  *   post:
  *     summary: Create new segment
  *     tags: [Segments]
@@ -26,7 +26,7 @@
 
 /**
  * @swagger
- * /segments/preview:
+ * /segment/preview:
  *   post:
  *     summary: Preview segment
  *     tags: [Segments]
@@ -45,7 +45,7 @@
 
 /**
  * @swagger
- * /segments:
+ * /segment:
  *   get:
  *     summary: Get all segments
  *     tags: [Segments]
@@ -67,7 +67,7 @@
 
 /**
  * @swagger
- * /segments/{id}:
+ * /segment/{id}:
  *   get:
  *     summary: Get segment by ID
  *     tags: [Segments]
@@ -89,7 +89,7 @@
 
 /**
  * @swagger
- * /segments/{id}/customers:
+ * /segment/{id}/customers:
  *   get:
  *     summary: Get customers for segment
  *     tags: [Segments]
@@ -109,7 +109,7 @@
 
 /**
  * @swagger
- * /segments/{id}:
+ * /segment/{id}:
  *   put:
  *     summary: Update segment by ID
  *     tags: [Segments]
@@ -137,7 +137,7 @@
 
 /**
  * @swagger
- * /segments/{id}:
+ * /segment/{id}:
  *   delete:
  *     summary: Delete segment by ID
  *     tags: [Segments]

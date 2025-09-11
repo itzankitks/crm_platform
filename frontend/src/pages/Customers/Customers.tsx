@@ -43,7 +43,11 @@ const Customers: React.FC = () => {
 
   const fetchCustomers = async () => {
     try {
-      const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT);
+      const { data: customerResp } = await axios.get(GET_CUSTOMER_ENDPOINT, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setCustomers(customerResp.customers || []);
     } catch (err) {
       setError("Failed to fetch customers.");
@@ -58,7 +62,11 @@ const Customers: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`${GET_CUSTOMER_ENDPOINT}/${id}`);
+      await axios.delete(`${GET_CUSTOMER_ENDPOINT}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setCustomers(customers.filter((customer) => customer._id !== id));
       showToast("Customer deleted successfully", "success");
     } catch (err) {
@@ -89,7 +97,6 @@ const Customers: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      // Validate all fields
       for (const customer of newCustomers) {
         if (!customer.name) {
           showToast("Customer name is required", "error");
@@ -105,9 +112,17 @@ const Customers: React.FC = () => {
         }
       }
 
-      const { data } = await axios.post(GET_CUSTOMER_ENDPOINT, {
-        customers: newCustomers,
-      });
+      const { data } = await axios.post(
+        GET_CUSTOMER_ENDPOINT,
+        {
+          customers: newCustomers,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       showToast(`${data.count} customers queued for creation!`, "success");
       setShowCreateModal(false);
@@ -124,14 +139,12 @@ const Customers: React.FC = () => {
       const file = e.target.files[0];
       setCsvFile(file);
 
-      // Parse CSV file
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
           const lines = content.split("\n");
 
-          // Skip header row if it exists
           const dataLines = lines[0].toLowerCase().includes("name")
             ? lines.slice(1)
             : lines;
@@ -165,7 +178,6 @@ const Customers: React.FC = () => {
 
     setUploading(true);
     try {
-      // Prepare data for upload
       const formData = new FormData();
       formData.append("csv", csvFile);
 
@@ -185,7 +197,6 @@ const Customers: React.FC = () => {
         "success"
       );
 
-      // Add temporary customers to UI with optimistic update
       const newCustomersWithIds = csvPreview.map((customer) => ({
         ...customer,
         _id: `temp-${Math.random().toString(36).substr(2, 9)}`,
@@ -199,15 +210,17 @@ const Customers: React.FC = () => {
         ...prevCustomers,
       ]);
 
-      // Reset CSV upload state
       setShowCSVUploadModal(false);
       setCsvFile(null);
       setCsvPreview([]);
 
-      // Start polling for updates
       const pollForUpdates = async () => {
         try {
-          const { data: updatedData } = await axios.get(GET_CUSTOMER_ENDPOINT);
+          const { data: updatedData } = await axios.get(GET_CUSTOMER_ENDPOINT, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
           setCustomers(updatedData.customers || []);
           clearInterval(pollInterval);
         } catch (err) {
@@ -257,7 +270,6 @@ const Customers: React.FC = () => {
           </div>
         </div>
 
-        {/* Refresh button */}
         <div className="mb-4">
           <button
             onClick={fetchCustomers}
@@ -351,7 +363,6 @@ const Customers: React.FC = () => {
           )}
         </div>
 
-        {/* Create Customers Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
@@ -437,7 +448,6 @@ const Customers: React.FC = () => {
           </div>
         )}
 
-        {/* CSV Upload Modal */}
         {showCSVUploadModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">

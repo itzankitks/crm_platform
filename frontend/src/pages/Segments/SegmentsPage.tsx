@@ -105,16 +105,6 @@ const SegmentsPage: React.FC = () => {
                         <Play className="h-4 w-4 mr-1" />
                         Run Campaign
                       </button>
-                      {/* <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/segment/${segment._id}`);
-                        }}
-                        className="inline-flex items-center px-3 py-2 text-blue-600 hover:text-blue-800 font-medium hover:bg-blue-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Details
-                      </button> */}
                     </div>
                   </div>
                 </div>

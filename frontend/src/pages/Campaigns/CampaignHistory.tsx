@@ -27,7 +27,11 @@ const CampaignHistory: React.FC = () => {
   const fetchCampaignsAndStats = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(GET_CAMPAIGN_ENDPOINT);
+      const res = await axios.get(GET_CAMPAIGN_ENDPOINT, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       const list: Campaign[] = res.data.campaigns || [];
 
       list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
@@ -35,7 +39,11 @@ const CampaignHistory: React.FC = () => {
       const statsPromises = list.map(async (c) => {
         try {
           console.log("Fetching stats for campaign", c._id);
-          const r = await axios.get(`${GET_CAMPAIGN_ENDPOINT}/${c._id}/stats`);
+          const r = await axios.get(`${GET_CAMPAIGN_ENDPOINT}/${c._id}/stats`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
           console.log("Stats fetched for campaign", c._id, ":", r.data.stats);
           return { ...c, stats: r.data.stats };
         } catch (err) {

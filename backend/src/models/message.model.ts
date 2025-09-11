@@ -1,5 +1,43 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Message:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         campaignId:
+ *           type: string
+ *         customerId:
+ *           type: string
+ *         customerName:
+ *           type: string
+ *         text:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum:
+ *             - PENDING
+ *             - SENT
+ *             - FAILED
+ *         vendorMessageId:
+ *           type: string
+ *           nullable: true
+ *         deliveredAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
 export interface IMessage extends Document {
   campaignId: mongoose.Types.ObjectId;
   customerId: mongoose.Types.ObjectId;
