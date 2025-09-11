@@ -3,6 +3,9 @@ import { Order, IOrder } from "../models/order.model";
 import { Customer, ICustomer } from "../models/customer.model";
 import mongoose from "mongoose";
 import { redisPublisher } from "../config/redis";
+import multer from "multer";
+import { parse } from "csv-parse/sync";
+import fs from "fs";
 
 interface OrderData {
   customerId: string;
@@ -31,6 +34,68 @@ const createOrders = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error queuing orders:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const createBulkOrders = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No CSV file uploaded" });
+    }
+
+    const csvData = fs.readFileSync(req.file.path, "utf8");
+    const records = parse(csvData, {
+      columns: false,
+      skip_empty_lines: true,
+      trim: true,
+    });
+
+    if (records.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: "CSV file is empty" });
+    }
+
+    const orders = records.map((record) => {
+      if (record.length < 2) {
+        throw new Error(`Invalid row format: ${record.join(",")}`);
+      }
+
+      const customerId = record[0].trim();
+      const cost = parseFloat(record[1].trim());
+
+      if (!customerId) {
+        throw new Error(`Missing customerId in row: ${record.join(",")}`);
+      }
+
+      if (isNaN(cost) || cost <= 0) {
+        throw new Error(`Invalid cost in row: ${record.join(",")}`);
+      }
+
+      return {
+        customerId,
+        cost,
+      };
+    });
+
+    fs.unlinkSync(req.file.path);
+
+    await redisPublisher.publish("orders:new", JSON.stringify(orders));
+
+    return res.status(202).json({
+      message: "Orders from CSV queued for creation",
+      count: orders.length,
+    });
+  } catch (err) {
+    console.error("Error processing CSV:", err);
+
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    if (err instanceof Error) {
+      return res.status(400).json({ error: err.message });
+    }
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -133,6 +198,7 @@ const deleteOrderById = async (req: Request, res: Response) => {
 
 export {
   createOrders,
+  createBulkOrders,
   getAllOrders,
   getOrderById,
   updateOrderById,

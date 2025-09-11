@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import { Customer, ICustomer } from "../models/customer.model";
 import mongoose from "mongoose";
 import { redisPublisher } from "../config/redis";
+import multer from "multer";
+import { parse } from "csv-parse/sync";
+import fs from "fs";
 
 interface CustomerData {
   name: string;
@@ -29,6 +32,79 @@ const createCustomers = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error queuing customers:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const createBulkCustomers = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No CSV file uploaded" });
+    }
+
+    // Read and parse the CSV file
+    const csvData = fs.readFileSync(req.file.path, "utf8");
+    const records: { name: string; email: string; phone: string }[] = parse(
+      csvData,
+      {
+        columns: ["name", "email", "phone"], // Explicitly define columns
+        skip_empty_lines: true,
+        trim: true,
+        from_line: 2, // Skip header row if it exists
+      }
+    ) as { name: string; email: string; phone: string }[];
+
+    // Validate CSV format
+    if (!records || records.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res
+        .status(400)
+        .json({ error: "CSV file is empty or invalid format" });
+    }
+
+    // Process records to create customers
+    const customers = [];
+
+    for (const record of records) {
+      // Validate each row
+      if (!record.name || !record.email || !record.phone) {
+        throw new Error(`Missing required fields in row`);
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(record.email)) {
+        throw new Error(`Invalid email format: ${record.email}`);
+      }
+
+      customers.push({
+        name: record.name,
+        email: record.email,
+        phone: record.phone,
+      });
+    }
+
+    // Clean up the uploaded file
+    fs.unlinkSync(req.file.path);
+
+    // Publish to Redis
+    await redisPublisher.publish("customers:new", JSON.stringify(customers));
+
+    return res.status(202).json({
+      message: "Customers from CSV queued for creation",
+      count: customers.length,
+    });
+  } catch (err) {
+    console.error("Error processing CSV:", err);
+
+    // Clean up the uploaded file if it exists
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    if (err instanceof Error) {
+      return res.status(400).json({ error: err.message });
+    }
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -126,6 +202,7 @@ const deleteCustomerById = async (req: Request, res: Response) => {
 
 export {
   createCustomers,
+  createBulkCustomers,
   getAllCustomers,
   getCustomerById,
   updateCustomerById,

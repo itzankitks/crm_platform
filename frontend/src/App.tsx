@@ -16,12 +16,13 @@ import CampaignsPage from "./pages/Campaigns/CampaignsPage";
 import Customers from "./pages/Customers/Customers";
 import NotFound from "./pages/NotFound/NotFound";
 import Loading from "./components/Loading/Loading";
-import HomePage from "./pages/HomePage/HomePage";
 import CampaignDetail from "./pages/CampaignDetail/CampaignDetail";
 import SegmentsPage from "./pages/Segments/SegmentsPage";
 import Orders from "./pages/Orders/Orders";
 import Campaigns from "./pages/Campaigns/Campaigns";
 import CampaignHistory from "./pages/Campaigns/CampaignHistory";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import HomePage from "./pages/HomePage/HomePage";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -88,6 +89,15 @@ function AppContent() {
         />
 
         <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/login"
           element={
             <PublicRoute>
@@ -105,7 +115,7 @@ function AppContent() {
         />
 
         <Route
-          path="/campaign"
+          path="/campaigns"
           element={
             <ProtectedRoute>
               <Campaigns />
@@ -132,7 +142,7 @@ function AppContent() {
         />
 
         <Route
-          path="/segment"
+          path="/segments"
           element={
             <ProtectedRoute>
               <SegmentsPage />
@@ -150,7 +160,7 @@ function AppContent() {
         />
 
         <Route
-          path="/order"
+          path="/orders"
           element={
             <ProtectedRoute>
               <Orders />

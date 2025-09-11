@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
+import { setupSwagger } from "./config/swagger";
 import routes from "./routes";
 import "./workers/customer.worker";
 import "./workers/order.worker";
@@ -11,6 +12,7 @@ import "./workers/delivery.receipt.batcher";
 dotenv.config();
 
 const app = express();
+setupSwagger(app);
 const PORT = process.env.PORT || 8000;
 console.log("PORT:", process.env.PORT);
 
