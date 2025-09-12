@@ -79,14 +79,7 @@ function AppContent() {
     <>
       {showNavbar && <Navbar userName={user?.name || ""} />}
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<HomePage />} />
 
         <Route
           path="/dashboard"

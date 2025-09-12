@@ -1,12 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, BarChart3, Sparkles, MessageCircle } from "lucide-react";
+import { BarChart3, Sparkles, MessageCircle } from "lucide-react";
+import { useAuth } from "../../context/authContext";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col pt-16">
+    <div
+      className={`min-h-screen flex flex-col ${isAuthenticated ? "pt-16" : ""}`}
+    >
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
@@ -17,18 +21,21 @@ const HomePage: React.FC = () => {
             your campaign performance with ease.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="bg-white text-blue-700 font-semibold py-3 px-6 rounded-lg shadow hover:bg-gray-100 transition"
-            >
-              Go to Dashboard
-            </button>
-            <button
-              onClick={() => navigate("/signup")}
-              className="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
-            >
-              Get Started
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="bg-white text-blue-700 font-semibold py-3 px-6 rounded-lg shadow hover:bg-gray-100 transition"
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/signup")}
+                className="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
+              >
+                Get Started
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -91,7 +98,7 @@ const HomePage: React.FC = () => {
               <span className="w-3 h-3 bg-green-400 rounded-full"></span>
             </div>
             <img
-              src="/demo-dashboard.png"
+              src="/dashboard_preview.png"
               alt="Dashboard Preview"
               className="w-full"
             />

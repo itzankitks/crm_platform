@@ -131,10 +131,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <button className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200">
-              <Bell className="h-5 w-5" />
-            </button>
-
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -250,10 +246,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
             ))}
             <hr className="my-3 border-gray-200" />
             <div className="flex items-center justify-between">
-              <button className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200">
-                <Bell className="h-4 w-4 mr-2" />
-                <span>Notifications</span>
-              </button>
               <button
                 onClick={handleSignOut}
                 className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
