@@ -19,7 +19,7 @@ const Signup: React.FC = () => {
       const { token, user } = res.data;
 
       login(token, user);
-      navigate("/feed");
+      navigate("/");
     } catch (err: any) {
       console.error("Signup error:", err);
       alert(err.response?.data?.message || "Signup failed");

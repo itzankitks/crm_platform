@@ -31,7 +31,7 @@ const Login: React.FC = () => {
       const res = await axios.post(LOGIN_ENDPOINT, { email, password });
       const { token, user } = res.data;
       login(token, user);
-      navigate("/feed");
+      navigate("/");
     } catch (err) {
       showToast("Invalid email or password", "error");
     }
