@@ -4,6 +4,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { SIGNUP_ENDPOINT, GOOGLE_SIGNUP_ENDPOINT } from "../../utils/endPoints";
 import { useAuth } from "../../context/authContext";
+import { useToast } from "../../context/toastContext";
 
 const Signup: React.FC = () => {
   const { login } = useAuth();
@@ -11,9 +12,18 @@ const Signup: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   const handleFormSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    showToast(
+      "Please be patient, the Render backend may take a few seconds to cold start.",
+      "info"
+    );
+
     try {
       const res = await axios.post(SIGNUP_ENDPOINT, { name, email, password });
       const { token, user } = res.data;
@@ -23,23 +33,36 @@ const Signup: React.FC = () => {
     } catch (err: any) {
       console.error("Signup error:", err);
       alert(err.response?.data?.message || "Signup failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleSignup = async (credentialResponse: any) => {
+    if (loading) return;
+    setLoading(true);
+    showToast(
+      "Please be patient, the Render backend may take a few seconds to cold start.",
+      "info"
+    );
+
     const idToken = credentialResponse.credential;
-    if (!idToken) return alert("Google signup failed");
+    if (!idToken) {
+      showToast("Google signup failed. No credential received.", "error");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await axios.post(GOOGLE_SIGNUP_ENDPOINT, { idToken });
       const { token, user } = res.data;
-
       login(token, user);
-
       navigate("/feed");
     } catch (err: any) {
       console.error("Google signup error:", err);
-      alert(err.response?.data?.message || "Google signup failed");
+      showToast(err.response?.data?.message || "Google signup failed", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,16 +98,21 @@ const Signup: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full bg-green-500 text-white py-2 rounded"
+          className={`w-full py-2 rounded text-white ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          }`}
+          disabled={loading}
         >
-          Sign Up
+          {loading ? "Signing up..." : "Sign Up"}
         </button>
       </form>
 
       <div className="mt-4">
         <GoogleLogin
           onSuccess={handleGoogleSignup}
-          onError={() => alert("Google signup failed")}
+          onError={() => showToast("Google signup failed", "error")}
         />
       </div>
 

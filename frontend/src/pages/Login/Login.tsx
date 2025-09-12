@@ -4,7 +4,6 @@ import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { GOOGLE_LOGIN_ENDPOINT, LOGIN_ENDPOINT } from "../../utils/endPoints";
 import { useAuth } from "../../context/authContext";
-import Toast from "../../components/Toast/Toast";
 import { useToast } from "../../context/toastContext";
 
 interface User {
@@ -24,9 +23,17 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   const handleFormLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    showToast(
+      "Please be patient, the Render backend may take a few seconds to cold start.",
+      "info"
+    );
+
     try {
       const res = await axios.post(LOGIN_ENDPOINT, { email, password });
       const { token, user } = res.data;
@@ -34,14 +41,23 @@ const Login: React.FC = () => {
       navigate("/");
     } catch (err) {
       showToast("Invalid email or password", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async (credentialResponse: any) => {
-    const idToken = credentialResponse.credential;
+    if (loading) return;
+    setLoading(true);
+    showToast(
+      "Please be patient, the Render backend may take a few seconds to cold start.",
+      "info"
+    );
 
+    const idToken = credentialResponse.credential;
     if (!idToken) {
       showToast("Google login failed. No credential received.", "error");
+      setLoading(false);
       return;
     }
 
@@ -58,6 +74,8 @@ const Login: React.FC = () => {
     } catch (error) {
       console.error("Login failed", error);
       showToast("Google login failed. Please try again.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,9 +104,14 @@ const Login: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded"
+          className={`w-full py-2 rounded text-white ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600"
+          }`}
+          disabled={loading}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
 
