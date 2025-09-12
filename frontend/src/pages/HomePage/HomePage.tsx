@@ -8,9 +8,7 @@ const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div
-      className={`min-h-screen flex flex-col ${isAuthenticated ? "pt-16" : ""}`}
-    >
+    <div className={`min-h-screen flex flex-col pt-16`}>
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
@@ -144,7 +142,12 @@ const HomePage: React.FC = () => {
             &copy; {new Date().getFullYear()} CRM Platform. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="/docs" className="hover:text-white">
+            <a
+              href="https://crm-platform-vzj8.onrender.com/api-docs"
+              className="hover:text-white"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Docs
             </a>
             <a

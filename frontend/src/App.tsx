@@ -77,7 +77,7 @@ function AppContent() {
 
   return (
     <>
-      {showNavbar && <Navbar userName={user?.name || ""} />}
+      <Navbar userName={user?.name || ""} />
       <Routes>
         <Route path="/" element={<HomePage />} />
 

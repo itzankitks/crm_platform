@@ -12,12 +12,12 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:8000/api",
-        description: "Local server",
-      },
-      {
         url: "https://crm-platform-vzj8.onrender.com/api",
         description: "Production server",
+      },
+      {
+        url: "http://localhost:8000/api",
+        description: "Local server",
       },
     ],
     components: {
