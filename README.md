@@ -233,3 +233,8 @@ Batch size of 50 ensures efficient processing without overwhelming the system.
 **Batch Processing**: Handles high-volume message generation efficiently  
 **MongoDB Aggregation**: Complex queries for audience segmentation  
 **Redis Queuing**: Manages concurrent campaign processing
+
+## Architecture / Low Level Design  
+
+Explore the detailed architecture diagram here:
+[View Architecture on Eraser](https://app.eraser.io/workspace/KKutmQ8UwrwqNlU0Jitb)
