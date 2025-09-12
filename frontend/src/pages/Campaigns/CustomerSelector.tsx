@@ -31,7 +31,6 @@ const CustomerSelector: React.FC<Props> = ({
       destination.droppableId === "selected"
     ) {
       const customer = available[source.index];
-
       if (!selected.find((c) => c._id === customer._id)) {
         onSelectedChange([...selected, customer]);
 
@@ -52,21 +51,30 @@ const CustomerSelector: React.FC<Props> = ({
       destination.droppableId === "available"
     ) {
       const customer = selected[source.index];
-
       if (!available.find((c) => c._id === customer._id)) {
         onAvailableChange([...available, customer]);
       }
-
       const updatedSelected = [...selected];
       updatedSelected.splice(source.index, 1);
       onSelectedChange(updatedSelected);
     }
   };
 
+  const handleAddAll = () => {
+    onSelectedChange([...selected, ...available]);
+    onAvailableChange([]);
+  };
+
+  const handleRemoveAll = () => {
+    onAvailableChange([...available, ...selected]);
+    onSelectedChange([]);
+  };
+
   return (
     <div className="flex gap-6 mt-6">
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex gap-6 w-full">
+          {/* Available Customers */}
           <Droppable droppableId="available">
             {(provided: any) => (
               <div
@@ -74,7 +82,18 @@ const CustomerSelector: React.FC<Props> = ({
                 {...provided.droppableProps}
                 className="w-1/2 bg-white rounded-lg shadow p-4 flex flex-col"
               >
-                <h2 className="font-medium mb-2">Available Customers</h2>
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="font-medium">Available Customers</h2>
+                  {available.length > 0 && (
+                    <button
+                      onClick={handleAddAll}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      Add All →
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex-1 overflow-y-auto max-h-[500px] pr-2">
                   {available.map((cust, index) => (
                     <Draggable
@@ -101,6 +120,7 @@ const CustomerSelector: React.FC<Props> = ({
             )}
           </Droppable>
 
+          {/* Selected Audience */}
           <Droppable droppableId="selected">
             {(provided: any) => (
               <div
@@ -108,7 +128,18 @@ const CustomerSelector: React.FC<Props> = ({
                 {...provided.droppableProps}
                 className="w-1/2 bg-white rounded-lg shadow p-4 flex flex-col"
               >
-                <h2 className="font-medium mb-2">Selected Audience</h2>
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="font-medium">Selected Audience</h2>
+                  {selected.length > 0 && (
+                    <button
+                      onClick={handleRemoveAll}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      ← Remove All
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex-1 overflow-y-auto max-h-[500px] pr-2">
                   {selected.map((cust, index) => (
                     <Draggable
