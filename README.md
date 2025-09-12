@@ -91,6 +91,19 @@ npm run dev
 ```bash
 cd ../frontend
 npm install
+```
+
+Create `.env` file in frontend directory:
+
+```env
+VITE_GOOGLE_CLIENT_ID=[Create your Google Client Id]
+VITE_GEMINI_API_KEY=[Your Gemini API Key]
+VITE_BACKEND_URL=[Your Backend URL]
+```
+
+Start the project:
+
+```bash
 npm run dev
 ```
 
