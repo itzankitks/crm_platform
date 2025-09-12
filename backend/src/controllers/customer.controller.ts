@@ -103,16 +103,11 @@ const createBulkCustomers = async (req: Request, res: Response) => {
 
 const getAllCustomers = async (req: Request, res: Response) => {
   try {
-    const cacheKey = "all_customers";
-    const cached = await redisPublisher.get(cacheKey);
-    if (cached) {
-      return res
-        .status(200)
-        .json({ customers: JSON.parse(cached), cached: true });
-    }
-    const customers: ICustomer[] = await Customer.find({});
-    await redisPublisher.set(cacheKey, JSON.stringify(customers), "EX", 120);
-    return res.status(200).json({ customers, cached: false });
+    const customers: ICustomer[] = await Customer.find({}).sort({
+      createdAt: -1,
+    });
+
+    return res.status(200).json({ customers });
   } catch (error) {
     console.log("Error in get all customers: ", error);
     if (error instanceof Error) {

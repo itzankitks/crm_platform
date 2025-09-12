@@ -102,7 +102,7 @@ const createBulkOrders = async (req: Request, res: Response) => {
 
 const getAllOrders = async (req: Request, res: Response) => {
   try {
-    const orders: IOrder[] = await Order.find({});
+    const orders: IOrder[] = await Order.find({}).sort({ createdAt: -1 });
     return res.status(200).json({ orders });
   } catch (error) {
     console.log("Error in get all orders: ", error);
