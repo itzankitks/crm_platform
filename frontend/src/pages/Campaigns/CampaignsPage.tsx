@@ -153,7 +153,7 @@ const CampaignPage: React.FC = () => {
       setSelectedSegmentId("");
       setAvailableCustomers([]);
       setSelectedCustomers([]);
-      navigate("/campaign");
+      navigate("/campaigns");
     } catch (err) {
       console.error("Error creating campaign:", err);
       showToast("Failed to create campaign", "error");
