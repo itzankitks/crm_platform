@@ -6,8 +6,9 @@ import mongoose, { Types } from "mongoose";
 import { messageQueue } from "../queues/message.queue";
 import { enqueueCampaignMessages } from "../services/campaign.service";
 import { redisPublisher } from "../config/redis";
+import { AuthenticatedRequest } from "../utils/auth";
 
-const createNewCampaign = async (req: Request, res: Response) => {
+const createNewCampaign = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, segmentId, messageTemplate, customerIds, intent } = req.body;
 
@@ -17,6 +18,7 @@ const createNewCampaign = async (req: Request, res: Response) => {
     const campaign = await Campaign.create({
       title,
       segmentId,
+      userId: req.user?._id,
       messageTemplate,
       customerIds,
       audienceSize: customerIds.length,
@@ -40,9 +42,11 @@ const createNewCampaign = async (req: Request, res: Response) => {
   }
 };
 
-const getAllCampaigns = async (req: Request, res: Response) => {
+const getAllCampaigns = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const allCampaigns: ICampaign[] = await Campaign.find({}).sort({
+    const allCampaigns: ICampaign[] = await Campaign.find({
+      userId: req.user?._id,
+    }).sort({
       createdAt: -1,
     });
 

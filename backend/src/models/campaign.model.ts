@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface ICampaign extends Document {
   title: string;
   segmentId: mongoose.Types.ObjectId | null;
+  userId: mongoose.Types.ObjectId;
   status: "pending" | "in-progress" | "completed";
   messageTemplate: string;
   customerIds: mongoose.Types.ObjectId[];
@@ -21,6 +22,11 @@ const campaignSchema = new Schema<ICampaign>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Segment",
       default: null,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     status: {
       type: String,

@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:scale-105 transition-all duration-300 animate-slide-up"
-              onClick={() => navigate("/order")}
+              onClick={() => navigate("/orders")}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -171,7 +171,7 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => navigate("/campaign")}
+                    onClick={() => navigate("/campaigns")}
                     className="group inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                   >
                     <Eye className="h-4 w-4 mr-2 transition-transform duration-200" />
@@ -245,7 +245,7 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => navigate("/segment")}
+                    onClick={() => navigate("/segments")}
                     className="group inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                   >
                     <Eye className="h-4 w-4 mr-2 transition-transform duration-200" />
