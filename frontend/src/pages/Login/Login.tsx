@@ -70,7 +70,7 @@ const Login: React.FC = () => {
       login(token, user);
 
       showToast("Google login successful!", "success");
-      navigate("/feed");
+      navigate("/");
     } catch (error) {
       console.error("Login failed", error);
       showToast("Google login failed. Please try again.", "error");

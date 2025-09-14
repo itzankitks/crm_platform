@@ -57,7 +57,7 @@ const Signup: React.FC = () => {
       const res = await axios.post(GOOGLE_SIGNUP_ENDPOINT, { idToken });
       const { token, user } = res.data;
       login(token, user);
-      navigate("/feed");
+      navigate("/");
     } catch (err: any) {
       console.error("Google signup error:", err);
       showToast(err.response?.data?.message || "Google signup failed", "error");
